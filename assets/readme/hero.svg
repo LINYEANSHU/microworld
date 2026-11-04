@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="384" viewBox="0 0 1200 384"
+     role="img" aria-labelledby="hero-title hero-desc">
+  <title id="hero-title">微疫世界 — 离线单机桌边观察游戏</title>
+  <desc id="hero-desc">深色标题板：左侧为项目名与一句话价值、五个特性标签；右侧为游戏内实时状态读数与感染圆点航线母题。</desc>
+
+  <defs>
+    <linearGradient id="orb" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4fd8b0"/>
+      <stop offset="0.55" stop-color="#1d6a72"/>
+      <stop offset="1" stop-color="#0d2a33"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="384" rx="26" fill="#0a1216"/>
+  <!-- 细经纬线母题（极淡） -->
+  <g stroke="#78c8dc" stroke-opacity="0.05" stroke-width="1">
+    <line x1="0" y1="96" x2="1200" y2="96"/>
+    <line x1="0" y1="192" x2="1200" y2="192"/>
+    <line x1="0" y1="288" x2="1200" y2="288"/>
+    <line x1="640" y1="0" x2="640" y2="384"/>
+  </g>
+
+  <!-- 左：标题块 -->
+  <g id="title-block" transform="translate(64 52)">
+    <text x="0" y="18" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18"
+          fill="#7fa8ad" letter-spacing="4">离线 · 单机 · 桌边观察</text>
+    <text x="-2" y="102" font-family="'Segoe UI','Microsoft YaHei',system-ui,sans-serif" font-size="80"
+          font-weight="300" fill="#eafff8" letter-spacing="18">微疫世界</text>
+    <rect x="2" y="124" width="188" height="3" rx="1.5" fill="#4fd8b0" fill-opacity="0.75"/>
+    <text x="0" y="170" font-family="'Segoe UI','Microsoft YaHei',system-ui,sans-serif" font-size="23"
+          fill="#cfe8ea">一个放在桌边、自己运行的小世界。</text>
+    <text x="0" y="204" font-family="'Segoe UI','Microsoft YaHei',system-ui,sans-serif" font-size="23"
+          fill="#cfe8ea">你看一眼，就知道发生了什么。</text>
+    <g id="feature-chips" font-family="'Segoe UI','Microsoft YaHei',system-ui,sans-serif" font-size="18" fill="#9fc9de">
+      <rect x="0" y="232" rx="15" width="150" height="34" fill="none" stroke="#78c8dc" stroke-opacity="0.3"/>
+      <text x="24" y="255">零操作全自动</text>
+      <rect x="166" y="232" rx="15" width="176" height="34" fill="none" stroke="#78c8dc" stroke-opacity="0.3"/>
+      <text x="190" y="255">一轮 45–120 分钟</text>
+      <rect x="358" y="232" rx="15" width="122" height="34" fill="none" stroke="#78c8dc" stroke-opacity="0.3"/>
+      <text x="382" y="255">纯 CPU 运行</text>
+      <rect x="0" y="276" rx="15" width="110" height="34" fill="none" stroke="#78c8dc" stroke-opacity="0.3"/>
+      <text x="24" y="299">完全离线</text>
+      <rect x="126" y="276" rx="15" width="122" height="34" fill="none" stroke="#78c8dc" stroke-opacity="0.3"/>
+      <text x="150" y="299">60 FPS 地图</text>
+    </g>
+  </g>
+
+  <!-- 右：游戏状态读数卡（项目母题：感染圆点 × 航线） -->
+  <g id="status-board" transform="translate(700 60)">
+    <rect width="436" height="252" rx="18" fill="#0c181e" stroke="#78c8dc" stroke-opacity="0.16"/>
+    <g font-family="'Segoe UI','Microsoft YaHei',system-ui,sans-serif">
+      <rect x="24" y="22" rx="13" width="96" height="30" fill="rgba(79,216,176,0.12)" stroke="rgba(79,216,176,0.35)"/>
+      <text x="44" y="43" font-size="17" fill="#9fe8cf">蔓延中</text>
+      <text x="140" y="43" font-size="17" fill="#7fa8ad">观察日</text>
+      <text x="204" y="43" font-size="17" fill="#cfe8ea">第2年·第339天</text>
+
+      <text x="24" y="88" font-size="18" fill="#7fa8ad">感染</text>
+      <text x="76" y="89" font-size="24" font-weight="600" fill="#eafff8">564万</text>
+      <path d="M150 80 l6 -10 6 10 z" fill="#ff6b6b"/>
+      <text x="180" y="88" font-size="18" fill="#7fa8ad">死亡</text>
+      <text x="232" y="89" font-size="24" font-weight="600" fill="#cfe8ea">2.1亿</text>
+      <text x="316" y="88" font-size="18" fill="#7fa8ad">适应点</text>
+      <text x="382" y="89" font-size="24" font-weight="600" fill="#cfe8ea">14</text>
+
+      <text x="24" y="130" font-size="18" fill="#7fa8ad">研究</text>
+      <text x="76" y="131" font-size="24" font-weight="600" fill="#cfe8ea">41%</text>
+      <rect x="150" y="120" width="200" height="7" rx="3.5" fill="rgba(120,200,220,0.14)"/>
+      <rect x="150" y="120" width="82" height="7" rx="3.5" fill="#4fd8b0"/>
+
+      <!-- 圆点航线母题 -->
+      <g stroke="#cfe8ea" stroke-opacity="0.16" stroke-width="1">
+        <line x1="70" y1="200" x2="150" y2="176"/>
+        <line x1="150" y1="176" x2="232" y2="204"/>
+        <line x1="232" y1="204" x2="330" y2="182"/>
+        <line x1="150" y1="176" x2="196" y2="150"/>
+        <line x1="196" y1="150" x2="330" y2="182"/>
+        <line x1="70" y1="200" x2="196" y2="150"/>
+      </g>
+      <circle cx="70" cy="200" r="9" fill="#3a6a78"/>
+      <circle cx="150" cy="176" r="14" fill="#3a6a78"/>
+      <circle cx="232" cy="204" r="11" fill="#4fd8b0" fill-opacity="0.85"/>
+      <circle cx="330" cy="182" r="16" fill="#b48cff" fill-opacity="0.9"/>
+      <circle cx="196" cy="150" r="7" fill="#3a6a78"/>
+      <circle cx="290" cy="150" r="6" fill="#3a6a78"/>
+      <circle cx="330" cy="182" r="24" fill="none" stroke="#b48cff" stroke-opacity="0.4" stroke-width="1.5"/>
+      <circle cx="330" cy="182" r="34" fill="none" stroke="#b48cff" stroke-opacity="0.15" stroke-width="1"/>
+
+      <text x="24" y="236" font-size="17" fill="#7fa8ad">实时聚合模拟 · 1–2 Hz · 80 区域 · 陆 / 海 / 空 航线</text>
+    </g>
+  </g>
+
+  <!-- 右下角落款母题 -->
+  <text x="1160" y="322" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+        font-size="16" fill="#7fa8ad" fill-opacity="0.7">MW · 离线观察舱</text>
+</svg>

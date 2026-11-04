@@ -1,0 +1,64 @@
+{
+ "gpu": "disabled",
+ "checks": {
+  "boot": {
+   "mw": true,
+   "errs": []
+  },
+  "fastforward": {
+   "day": 2000,
+   "msPerTick": 0.0611,
+   "errs": []
+  },
+  "render": {
+   "avgMsPerFrame": 0.551,
+   "worstMs": 61.6,
+   "fpsCeiling": 1813.2
+  },
+  "raf": {
+   "fps": 176.4,
+   "frames": 706
+  },
+  "memory": {
+   "heapBeforeMB": 9.5
+  },
+  "soak": {
+   "day": 22004,
+   "totalMs": 360,
+   "msPerTick": 0.018,
+   "badRegions": 0,
+   "ended": "eradicated",
+   "news": 400,
+   "hist": 1500,
+   "heapAfterMB": 9.5,
+   "errs": []
+  },
+  "renderSoak": {
+   "avgMs": 0.514,
+   "worstMs": 70.1,
+   "heapMB": 9.5
+  },
+  "saves": {
+   "ok": 200,
+   "fail": 0,
+   "errs": []
+  },
+  "catchup": {
+   "dayBefore": 22204,
+   "dayAfter": 22207,
+   "advanced": 3,
+   "anchorMs": true,
+   "overlayShown": true,
+   "errs": []
+  }
+ },
+ "verdict": {
+  "fastforward_ok": true,
+  "render60fps_ok": true,
+  "raf_measured": 176.4,
+  "soak_clean": true,
+  "saves_ok": true,
+  "catchup_once": true,
+  "heap_growth_MB": 0
+ }
+}

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="150" viewBox="0 0 1200 150"
+     role="img" aria-labelledby="wf-title wf-desc">
+  <title id="wf-title">使用流程：四步开始一次观察</title>
+  <desc id="wf-desc">四个步骤：双击打开页面，一键开始观察，世界自动运行可加速暂停，结局复盘并开始新一轮。</desc>
+
+  <rect width="1200" height="150" rx="20" fill="#0c181e"/>
+  <g font-family="'Segoe UI','Microsoft YaHei',system-ui,sans-serif" fill="#cfe8ea">
+    <g transform="translate(56 0)">
+      <circle cx="24" cy="75" r="17" fill="none" stroke="#4fd8b0" stroke-width="1.6"/>
+      <text x="24" y="81" text-anchor="middle" font-size="17" fill="#4fd8b0">1</text>
+      <text x="52" y="70" font-size="20" font-weight="600">打开页面</text>
+      <text x="52" y="96" font-size="16" fill="#7fa8ad">双击 index.html 或启动器</text>
+    </g>
+    <path d="M300 75 h52 m-8 -6 l8 6 -8 6" stroke="#78c8dc" stroke-opacity="0.4" stroke-width="1.5" fill="none"/>
+    <g transform="translate(368 0)">
+      <circle cx="24" cy="75" r="17" fill="none" stroke="#4fd8b0" stroke-width="1.6"/>
+      <text x="24" y="81" text-anchor="middle" font-size="17" fill="#4fd8b0">2</text>
+      <text x="52" y="70" font-size="20" font-weight="600">一键开始观察</text>
+      <text x="52" y="96" font-size="16" fill="#7fa8ad">也可先选场景与异常类型</text>
+    </g>
+    <path d="M612 75 h52 m-8 -6 l8 6 -8 6" stroke="#78c8dc" stroke-opacity="0.4" stroke-width="1.5" fill="none"/>
+    <g transform="translate(680 0)">
+      <circle cx="24" cy="75" r="17" fill="none" stroke="#4fd8b0" stroke-width="1.6"/>
+      <text x="24" y="81" text-anchor="middle" font-size="17" fill="#4fd8b0">3</text>
+      <text x="52" y="70" font-size="20" font-weight="600">世界自动运行</text>
+      <text x="52" y="96" font-size="16" fill="#7fa8ad">随时加速 · 暂停 · 挂机均可</text>
+    </g>
+    <path d="M928 75 h52 m-8 -6 l8 6 -8 6" stroke="#78c8dc" stroke-opacity="0.4" stroke-width="1.5" fill="none"/>
+    <g transform="translate(996 0)">
+      <circle cx="24" cy="75" r="17" fill="none" stroke="#e8b45a" stroke-width="1.6"/>
+      <text x="24" y="81" text-anchor="middle" font-size="17" fill="#e8b45a">4</text>
+      <text x="52" y="70" font-size="20" font-weight="600">结局复盘</text>
+      <text x="52" y="96" font-size="16" fill="#7fa8ad">摘要与评级</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>微疫世界</title>
+<link rel="stylesheet" href="css/style.css">
+<script>/* 全局错误捕获（诊断用，无网络上报） */
+window.__errs = [];
+window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + '@' + (l || 0) + ':' + (c || 0)); return false; };
+</script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== 开始屏 ===== -->
+  <div id="screen-start" class="screen">
+    <div class="start-inner">
+      <div class="title-orb" id="title-orb"></div>
+      <h1>微疫世界</h1>
+      <p class="subtitle">一个放在桌边、自己运行的小世界。你看一眼，就知道发生了什么。</p>
+      <div class="start-actions">
+        <button id="btn-start" class="btn-big">一键开始观察</button>
+        <button id="btn-continue" class="btn-ghost hidden">继续上次观察</button>
+        <div class="start-row">
+          <button id="btn-setup" class="btn-ghost">高级设置</button>
+          <button id="btn-about" class="btn-ghost">关于</button>
+        </div>
+      </div>
+      <p class="start-foot">全自动 · 无需操作 · 默认一轮约45–120分钟 · 可随时暂停加速 · 所有数值均为玩法虚构</p>
+    </div>
+    <div id="start-news" class="start-news hidden"></div>
+  </div>
+
+  <!-- ===== 高级设置屏 ===== -->
+  <div id="screen-setup" class="screen hidden">
+    <div class="panel-card wide">
+      <h2>开始一次新观察</h2>
+      <div class="form-grid">
+        <label>场景
+          <select id="sel-scenario"></select>
+          <small id="scen-desc"></small>
+        </label>
+        <label>异常类型
+          <select id="sel-anomaly"></select>
+          <small id="anom-desc"></small>
+        </label>
+        <label>世界种子 <span class="dim">（相同种子 = 相同世界）</span>
+          <div class="seed-row">
+            <input id="in-seed" type="text" spellcheck="false">
+            <button id="btn-reroll" class="btn-mini" title="随机种子">换</button>
+          </div>
+        </label>
+        <label>初始区域
+          <select id="sel-region"><option value="-1">随机（按人口）</option></select>
+        </label>
+        <label>默认速度
+          <select id="sel-speed">
+            <option value="1">1×（推荐）</option>
+            <option value="2">2×</option>
+            <option value="4">4×</option>
+          </select>
+        </label>
+        <label>事件频率
+          <select id="sel-freq">
+            <option value="0.5">偏少</option>
+            <option value="1" selected>标准</option>
+            <option value="2">频繁</option>
+          </select>
+        </label>
+        <label>观察风格
+          <select id="sel-style">
+            <option value="0">安静（只看大事）</option>
+            <option value="1" selected>简洁（默认）</option>
+            <option value="2">详尽（更多注解）</option>
+          </select>
+        </label>
+        <label>离线进度上限
+          <select id="sel-offcap">
+            <option value="4">4小时</option>
+            <option value="8" selected>8小时</option>
+            <option value="12">12小时</option>
+          </select>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button id="btn-setup-start" class="btn-big">开始观察</button>
+        <button id="btn-setup-back" class="btn-ghost">返回</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 关于 ===== -->
+  <div id="screen-about" class="screen hidden">
+    <div class="panel-card">
+      <h2>关于《微疫世界》</h2>
+      <p class="about-p">原创离线单机观察游戏。受经典疫情模拟游戏的核心系统启发而做，但所有机制、文案、数值、地图轮廓均为原创或来自公有领域数据，未使用任何受版权保护的素材。</p>
+      <p class="about-p">世界人口、区域、异常类型与参数全部为<b>玩法虚构数据</b>，不代表任何真实统计，也不对应任何现实病原。地图轮廓来自 Natural Earth（公有领域），经简化重绘。</p>
+      <p class="about-p">本作不联网、不采集任何数据。存档保存在本机浏览器中。</p>
+      <div class="form-actions"><button id="btn-about-back" class="btn-ghost">返回</button></div>
+    </div>
+  </div>
+
+  <!-- ===== 游戏屏 ===== -->
+  <div id="screen-game" class="hidden">
+    <canvas id="map"></canvas>
+
+    <div id="hud-top">
+      <div class="hud-left">
+        <div id="chip-phase" class="chip">监测期</div>
+        <div id="hud-day" class="hud-day">第1年·第1天</div>
+      </div>
+      <div class="hud-stats">
+        <div class="stat" id="st-inf"><i>感染</i><b>0</b><s id="tr-inf"></s></div>
+        <div class="stat" id="st-dead"><i>死亡</i><b>0</b></div>
+        <div class="stat" id="st-cure"><i>研究</i><b>0%</b><div class="bar"><div id="bar-cure"></div></div></div>
+        <div class="stat" id="st-aw"><i>警觉</i><b>0%</b></div>
+        <div class="stat" id="st-ap" title="适应点：自动积累并自动用于演化"><i>适应点</i><b>0</b></div>
+      </div>
+      <div class="hud-right">
+        <div class="speeds">
+          <button class="spd" data-s="0" title="暂停（空格）">⏸</button>
+          <button class="spd on" data-s="1">1×</button>
+          <button class="spd" data-s="2">2×</button>
+          <button class="spd" data-s="4">4×</button>
+          <button class="spd" data-s="8">8×</button>
+        </div>
+        <button id="btn-mini" class="hud-btn" title="迷你模式">迷你</button>
+        <button id="btn-menu" class="hud-btn">菜单</button>
+      </div>
+    </div>
+
+    <!-- 菜单 -->
+    <div id="menu-pop" class="pop hidden">
+      <button id="mi-save">保存存档</button>
+      <button id="mi-export">导出存档（文件）</button>
+      <button id="mi-import">导入存档（文件）</button>
+      <button id="mi-perf">性能统计</button>
+      <button id="mi-settings">设置</button>
+      <button id="mi-quit" class="warn">结束观察 · 回到首页</button>
+      <input id="file-import" type="file" accept=".json,application/json" class="hidden">
+    </div>
+
+    <!-- 设置浮层 -->
+    <div id="pop-settings" class="pop wide-pop hidden">
+      <h3>设置</h3>
+      <label class="ck"><input type="checkbox" id="ck-autoevo" checked> 自动演化（关闭后可手动购买特性）</label>
+      <label class="ck"><input type="checkbox" id="ck-muted" checked> 静音（本作默认无声音）</label>
+      <label class="ck"><input type="checkbox" id="ck-topmost-hint"> 置顶：请使用目录下“启动微疫世界.bat”启动（浏览器内置窗口无法自我置顶）</label>
+      <label>画质
+        <select id="sel-quality"><option value="2">完整特效</option><option value="1">精简</option><option value="0">最低</option></select>
+      </label>
+      <div class="perf-line" id="perf-line"></div>
+      <div class="form-actions"><button id="btn-set-close" class="btn-ghost">关闭</button></div>
+    </div>
+
+    <!-- 刚才发生了什么 -->
+    <div id="whatnow">
+      <div id="whatnow-head">刚才发生了什么 <b id="whatnow-toggle">▾</b></div>
+      <div id="whatnow-body"></div>
+    </div>
+
+    <!-- 新闻带 -->
+    <div id="ticker"><span id="ticker-text">…</span></div>
+
+    <!-- 详情抽屉 -->
+    <div id="drawer">
+      <div id="drawer-tabs">
+        <button class="dtab on" data-tab="region">区域</button>
+        <button class="dtab" data-tab="evo">演化</button>
+        <button class="dtab" data-tab="trend">趋势</button>
+        <button class="dtab" data-tab="timeline">时间线</button>
+        <button id="drawer-close" title="收起">×隐藏</button>
+      </div>
+      <div id="drawer-body"></div>
+    </div>
+    <button id="drawer-open" class="hidden">详情 ◂</button>
+
+    <div id="tooltip" class="hidden"></div>
+  </div>
+
+  <!-- ===== 结局 ===== -->
+  <div id="overlay-ending" class="overlay hidden">
+    <div class="panel-card ending">
+      <div class="end-grade" id="end-grade">A</div>
+      <h2 id="end-name">—</h2>
+      <p id="end-desc" class="end-desc"></p>
+      <div class="end-grid" id="end-stats"></div>
+      <div class="end-evo" id="end-evo"></div>
+      <div class="form-actions">
+        <button id="btn-end-continue" class="btn-ghost">继续观察这个世界</button>
+        <button id="btn-end-new" class="btn-big">新的一局</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 补算进度 ===== -->
+  <div id="overlay-catchup" class="overlay slim hidden">
+    <div class="panel-card">
+      <h3 id="catchup-title">正在补算离线进度…</h3>
+      <div class="bar big"><div id="catchup-bar"></div></div>
+      <p id="catchup-note" class="dim"></p>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+</div>
+
+<script src="js/ns.js"></script>
+<script src="js/rng.js"></script>
+<script src="js/data/land.js"></script>
+<script src="js/data/regions.js"></script>
+<script src="js/data/traits.js"></script>
+<script src="js/data/scenarios.js"></script>
+<script src="js/core/world.js"></script>
+<script src="js/core/sim.js"></script>
+<script src="js/core/response.js"></script>
+<script src="js/core/evolution.js"></script>
+<script src="js/core/events.js"></script>
+<script src="js/core/endings.js"></script>
+<script src="js/core/catchup.js"></script>
+<script src="js/core/persist.js"></script>
+<script src="js/ui/render.js"></script>
+<script src="js/ui/ui.js"></script>
+<script src="js/ui/main.js"></script>
+</body>
+</html>
