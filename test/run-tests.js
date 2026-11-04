@@ -10,6 +10,7 @@ function load(p) { require(path.join(__dirname, p)); }
 load('../js/ns.js'); load('../js/rng.js');
 load('../js/data/land.js'); load('../js/data/regions.js');
 load('../js/data/traits.js'); load('../js/data/scenarios.js');
+load('../js/data/i18n.js');
 load('../js/core/world.js'); load('../js/core/sim.js'); load('../js/core/response.js');
 load('../js/core/evolution.js'); load('../js/core/events.js'); load('../js/core/endings.js');
 load('../js/core/catchup.js'); load('../js/core/persist.js');

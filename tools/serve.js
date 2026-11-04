@@ -13,7 +13,7 @@ http.createServer(function (req, res) {
   if (f.indexOf(root) !== 0) { res.writeHead(403); res.end(); return; }
   fs.readFile(f, function (e, buf) {
     if (e) { res.writeHead(404); res.end('not found'); return; }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream' });
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     res.end(buf);
   });
 }).listen(port, '127.0.0.1', function () { console.log('serving http://127.0.0.1:' + port); });

@@ -60,23 +60,21 @@
   function finish(w, id) {
     w.flags.ended = id;
     w.flags.endedDay = w.day;
-    var def = MW.ENDING_DEFS[id];
-    MW.pushNews(w, '系统', '【' + def.name + '】——' + '世界走向已定格，可在结局摘要中查看复盘', 3);
+    var def = MW.endingDef(id);
+    MW.pushNews(w, '系统', MW.T('end.newsline', '【{n}】——世界走向已定格，可在结局摘要中查看复盘', { n: def.name }), 3);
     w.flags.endSummary = MW.buildSummary(w, id);
   }
 
   MW.buildSummary = function (w, id) {
-    var def = MW.ENDING_DEFS[id];
-    var REG = MW.REGIONS;
+    var def = MW.endingDef(id);
     var top = w.regions.map(function (r, i) { return [r.D, i]; })
       .sort(function (a, b) { return b[0] - a[0]; }).slice(0, 5)
-      .map(function (x) { return { name: REG[x[1]].name, dead: x[0] }; });
-    var h = w.hist;
+      .map(function (x) { return { name: MW.regionName(x[1]), dead: x[0] }; });
     return {
       id: id, name: def.name, desc: def.desc, day: w.day,
       dead: w.stats.deadTotal, infEver: w.stats.infEver,
       maxI: w.stats.maxI, maxIday: w.stats.maxIday,
-      start: REG[w.stats.startRegion] ? REG[w.stats.startRegion].name : '?',
+      start: MW.regionName(w.stats.startRegion),
       cure: w.research.deployed ? (U.fmtDay(w.research.deployedDay)) : null,
       bursts: w.stats.bursts,
       evoCount: w.evoLog.length,

@@ -170,11 +170,11 @@
         w.stats.bursts++;
         r._burstDay = day;
         if (w.stats.bursts % 6 === 1 && rd.urb > 0.6) {
-          MW.pushNews(w, '异常', rd.name + '出现齐鸣式集群传播，单日接触链激增', 2);
+          MW.pushNews(w, '异常', MW.T('sim.burst', '{r}出现齐鸣式集群传播，单日接触链激增', { r: MW.regionName(i) }), 2);
         }
       }
       if (p.reappear > 0 && sig > p.latent && E > 20000 && rng.chance(0.08)) {
-        MW.pushNews(w, '异常', rd.name + '出现唤醒波：沉寂感染灶再度活跃', 2);
+        MW.pushNews(w, '异常', MW.T('sim.wake', '{r}出现唤醒波：沉寂感染灶再度活跃', { r: MW.regionName(i) }), 2);
       }
     }
 

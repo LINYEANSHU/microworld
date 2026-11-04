@@ -39,10 +39,10 @@
         w.research.progress = 1;
         w.research.deployed = true;
         w.research.deployedDay = w.day;
-        MW.pushNews(w, '研究', '防控研究完成！干预方案开始全球部署', 3);
+        MW.pushNews(w, '研究', MW.T('resp.cureDone', '防控研究完成！干预方案开始全球部署'), 3);
       } else if (w.research.progress > 0.5 && !w.stats.halvedNoted) {
         w.stats.halvedNoted = true;
-        MW.pushNews(w, '研究', '研究过半：关键机制已被阐明', 2);
+        MW.pushNews(w, '研究', MW.T('resp.cureHalf', '研究过半：关键机制已被阐明'), 2);
       }
     }
     w.aidPool += rp * 0.26;
@@ -75,7 +75,7 @@
         w.aidPool -= grant * 10;
         if (grant > 0.15 && w.day - (R[idx].lastAidNews || -99) > 30) {
           R[idx].lastAidNews = w.day;
-          MW.pushNews(w, '援助', '援助物资抵达' + REG[idx].name + '：医疗承载短期提升', 1);
+          MW.pushNews(w, '援助', MW.T('resp.aidArrive', '援助物资抵达{r}：医疗承载短期提升', { r: MW.regionName(idx) }), 1);
         }
       }
       if (w.aidPool < 0) w.aidPool = 0;
@@ -100,16 +100,18 @@
     }
     if (closedNow.length) {
       if (closedNow.length > 4) {
-        MW.pushNews(w, '封锁', closedNow.length + '个区域升级交通管制（航空/海运/陆路分级）', 2);
+        MW.pushNews(w, '封锁', MW.T('resp.closedMany', '{n}个区域升级交通管制（航空/海运/陆路分级）', { n: closedNow.length }), 2);
       } else {
         for (i = 0; i < closedNow.length; i++) {
-          MW.pushNews(w, '封锁', REG[closedNow[i][0]].name + '关闭' + closedNow[i][1] + '路通道', 2);
+          MW.pushNews(w, '封锁', MW.T('resp.closed', '{r}关闭{w}路通道',
+            { r: MW.regionName(closedNow[i][0]), w: MW.T('resp.w' + { '空': 'Air', '海': 'Sea', '陆': 'Land' }[closedNow[i][1]], closedNow[i][1]) }), 2);
         }
       }
     }
     if (openedNow.length && openedNow.length <= 4) {
       for (i = 0; i < openedNow.length; i++) {
-        MW.pushNews(w, '封锁', REG[openedNow[i][0]].name + '恢复' + openedNow[i][1] + '路通行', 1);
+        MW.pushNews(w, '封锁', MW.T('resp.opened', '{r}恢复{w}路通行',
+          { r: MW.regionName(openedNow[i][0]), w: MW.T('resp.w' + { '空': 'Air', '海': 'Sea', '陆': 'Land' }[openedNow[i][1]], openedNow[i][1]) }), 1);
       }
     }
     // 封锁写入连接（新闻与模型一致的唯一写入点）

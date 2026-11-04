@@ -84,6 +84,13 @@
     env: '环境储库可进一步利用', 'clim:0': '热带人口尚未渗透', 'clim:1': '温带人口尚未渗透',
     'clim:2': '寒带人口尚未渗透', 'clim:3': '干旱区人口尚未渗透'
   };
+  function hintTxt(h) {
+    if (MW.LANG === 'en' && MW.DATA_EN.hintTxt[h]) return MW.DATA_EN.hintTxt[h];
+    return HINT_TXT[h] || '综合收益最高';
+  }
+  function refineName(id) {
+    return MW.LANG === 'en' ? MW.DATA_EN.refine[id] : MW.REFINE[id].name;
+  }
 
   // 子节点表（解锁价值）：某节点被购买后立刻解锁的下游节点
   var CHILDREN = null;
@@ -150,10 +157,11 @@
       w.stats.evoLastDay = w.day;
       MW.applyFxPublic(w.params, { m: MW.REFINE_FX(w.refineLvl), a: {} });
       w.evoLog.push({
-        day: w.day, id: 'refine', name: MW.REFINE[w.anomalyId].name, cost: best.cost, lvl: w.refineLvl,
-        reason: '精炼' + w.refineLvl + '级：综合传播面与' + (HINT_TXT[MW.REFINE[w.anomalyId].hints[0]] || '全局') + '，边际收益仍为正'
+        day: w.day, id: 'refine', name: refineName(w.anomalyId), cost: best.cost, lvl: w.refineLvl,
+        reason: MW.T('evo.refine.r', '精炼{n}级：综合传播面与{h}，边际收益仍为正',
+          { n: w.refineLvl, h: hintTxt(MW.REFINE[w.anomalyId].hints[0]) })
       });
-      MW.pushNews(w, '演化', MW.REFINE[w.anomalyId].name + '提升至' + w.refineLvl + '级', 1);
+      MW.pushNews(w, '演化', MW.T('evo.refineNews', '{n}提升至{l}级', { n: refineName(w.anomalyId), l: w.refineLvl }), 1);
     } else {
       var node = best.node;
       w.ap -= node.cost;
@@ -162,12 +170,13 @@
       MW.applyFxPublic(w.params, node);
       // 解释：主因 + 备选对比
       var mainHint = node.hints.length ? node.hints[0] : 'spread';
-      var reason = (HINT_TXT[mainHint] || '综合收益最高');
-      var second = cands[1] && cands[1].node ? cands[1].node.name : null;
-      var why = '选择【' + node.name + '】(' + node.cost + '适应点)：' + reason;
-      if (second) why += '；备选【' + second + '】边际收益略低';
-      w.evoLog.push({ day: w.day, id: node.id, name: node.name, cost: node.cost, reason: why });
-      MW.pushNews(w, '演化', '异常演化出【' + node.name + '】', 1);
+      var reason = hintTxt(mainHint);
+      var second = cands[1] && cands[1].node ? MW.traitName(cands[1].node.id) : null;
+      var why = MW.T('evo.choose', '选择【{n}】({c}适应点)：{why}',
+        { n: MW.traitName(node.id), c: node.cost, why: reason });
+      if (second) why += MW.T('evo.alt', '；备选【{m}】边际收益略低', { m: second });
+      w.evoLog.push({ day: w.day, id: node.id, name: MW.traitName(node.id), cost: node.cost, reason: why });
+      MW.pushNews(w, '演化', MW.T('evo.evNews', '异常演化出【{n}】', { n: MW.traitName(node.id) }), 1);
     }
     w.evoCd = 3;
     MW.syncRng(w);

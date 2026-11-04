@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="150" viewBox="0 0 1200 150"
+     role="img" aria-labelledby="wf-title wf-desc">
+  <title id="wf-title">Workflow: four steps to start an observation</title>
+  <desc id="wf-desc">Four steps: open the page, one-click observation, the world runs by itself, ending review.</desc>
+
+  <rect width="1200" height="150" rx="20" fill="#0c181e"/>
+  <g font-family="'Segoe UI',system-ui,sans-serif" fill="#cfe8ea">
+    <g transform="translate(56 0)">
+      <circle cx="24" cy="75" r="17" fill="none" stroke="#4fd8b0" stroke-width="1.6"/>
+      <text x="24" y="81" text-anchor="middle" font-size="17" fill="#4fd8b0">1</text>
+      <text x="52" y="70" font-size="20" font-weight="600">Open the page</text>
+      <text x="52" y="96" font-size="16" fill="#7fa8ad">double-click index.html or a launcher</text>
+    </g>
+    <path d="M322 75 h52 m-8 -6 l8 6 -8 6" stroke="#78c8dc" stroke-opacity="0.4" stroke-width="1.5" fill="none"/>
+    <g transform="translate(390 0)">
+      <circle cx="24" cy="75" r="17" fill="none" stroke="#4fd8b0" stroke-width="1.6"/>
+      <text x="24" y="81" text-anchor="middle" font-size="17" fill="#4fd8b0">2</text>
+      <text x="52" y="70" font-size="20" font-weight="600">One-click observe</text>
+      <text x="52" y="96" font-size="16" fill="#7fa8ad">or pick a scenario and anomaly first</text>
+    </g>
+    <path d="M678 75 h52 m-8 -6 l8 6 -8 6" stroke="#78c8dc" stroke-opacity="0.4" stroke-width="1.5" fill="none"/>
+    <g transform="translate(746 0)">
+      <circle cx="24" cy="75" r="17" fill="none" stroke="#4fd8b0" stroke-width="1.6"/>
+      <text x="24" y="81" text-anchor="middle" font-size="17" fill="#4fd8b0">3</text>
+      <text x="52" y="70" font-size="20" font-weight="600">The world runs</text>
+      <text x="52" y="96" font-size="16" fill="#7fa8ad">speed up · pause · idle anytime</text>
+    </g>
+    <path d="M1006 75 h52 m-8 -6 l8 6 -8 6" stroke="#78c8dc" stroke-opacity="0.4" stroke-width="1.5" fill="none"/>
+    <g transform="translate(1046 0)">
+      <circle cx="24" cy="75" r="17" fill="none" stroke="#e8b45a" stroke-width="1.6"/>
+      <text x="24" y="81" text-anchor="middle" font-size="17" fill="#e8b45a">4</text>
+      <text x="52" y="70" font-size="20" font-weight="600">Ending review</text>
+      <text x="52" y="96" font-size="16" fill="#7fa8ad">summary &amp; grade</text>
+    </g>
+  </g>
+</svg>

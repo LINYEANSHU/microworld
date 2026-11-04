@@ -1,11 +1,15 @@
 <h1 align="center">微疫世界</h1>
 
 <p align="center">
+  <b>中文</b> · <a href="README.en.md">English</a>
+</p>
+
+<p align="center">
   <a href="#-测试与性能"><img src="https://img.shields.io/badge/测试-26%2B10%20项全绿-4fd8b0" alt="测试"></a>
   <a href="#-测试与性能"><img src="https://img.shields.io/badge/渲染-纯CPU·零GPU-9adcf0" alt="CPU only"></a>
   <img src="https://img.shields.io/badge/网络-完全离线-e8b45a" alt="offline">
-  <img src="https://img.shields.io/badge/平台-Windows%2010%2F11-b48cff" alt="platform">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-7fa8ad" alt="license"></a>
+  <img src="https://img.shields.io/badge/语言-中%20%2F%20EN-b48cff" alt="i18n">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Unlicense-7fa8ad" alt="license"></a>
 </p>
 
 <p align="center">
@@ -59,6 +63,8 @@
 
 可选设置：世界种子、初始区域、异常类型、速度、事件频率、观察风格——不设置也能直接开始。
 
+**中英双语**：开始屏与设置里一键切换语言（界面、异常、特性、事件新闻、结局全量翻译），选择持久保存。
+
 ## 挂机与离线进度
 
 窗口隐藏/最小化时自动停绘并计时；恢复后分批补算（默认上限 8 小时，可调 4/12），超出部分按周快速推进并明确标注「近似处理」。暂停不累计离线进度；时钟回拨、重复恢复、休眠唤醒、坏存档均已防护——存档含模拟时间、三条随机数流、事件与完整历史，双槽轮换 + 校验和。
@@ -88,4 +94,8 @@
 
 ## License
 
-[MIT](LICENSE) · 地图轮廓来自 [Natural Earth](https://www.naturalearthdata.com/)（公有领域），简化重绘。
+[Unlicense](LICENSE)（公有领域贡献——最开放协议，无需署名、随意使用） · 地图轮廓来自 [Natural Earth](https://www.naturalearthdata.com/)（公有领域），简化重绘。
+
+<p align="center">
+  <b>中文</b> · <a href="README.en.md">English</a>
+</p>

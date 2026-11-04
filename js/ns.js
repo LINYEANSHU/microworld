@@ -12,6 +12,12 @@
   U.fmtPop = function (n) {
     if (!isFinite(n)) return '—';
     n = Math.max(0, n);
+    if (MW.LANG === 'en') {
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+      return Math.round(n) + '';
+    }
     if (n >= 1e8) return (n / 1e8).toFixed(n >= 1e9 ? 2 : 1) + '亿';
     if (n >= 1e4) return (n / 1e4).toFixed(n >= 1e6 ? 0 : 1) + '万';
     return Math.round(n) + '';
@@ -22,6 +28,7 @@
   };
   U.fmtDay = function (day) {
     var y = Math.floor(day / 365) + 1, d = (day % 365) + 1;
+    if (MW.LANG === 'en') return 'Y' + y + ' D' + d;
     return '第' + y + '年·第' + d + '天';
   };
 

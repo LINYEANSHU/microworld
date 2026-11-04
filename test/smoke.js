@@ -6,6 +6,7 @@ require('../js/data/land.js');
 require('../js/data/regions.js');
 require('../js/data/traits.js');
 require('../js/data/scenarios.js');
+require('../js/data/i18n.js');
 require('../js/core/world.js');
 require('../js/core/sim.js');
 require('../js/core/response.js');

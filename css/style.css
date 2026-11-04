@@ -45,6 +45,7 @@ h1 { font-size: 34px; letter-spacing: 12px; text-indent: 12px; font-weight: 300;
 .start-row { display: flex; gap: 12px; }
 .start-foot { margin-top: 34px; color: var(--dim); font-size: 11px; }
 .start-news { position: fixed; bottom: 18px; left: 0; right: 0; text-align: center; color: var(--dim); font-size: 12px; }
+.btn-lang { min-width: 64px; letter-spacing: 1px; }
 
 .btn-big {
   font-size: 17px; padding: 13px 46px; border-radius: 24px; border: 1px solid rgba(79, 216, 176, 0.5);

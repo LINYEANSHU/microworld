@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="css/style.css">
 <script>/* 全局错误捕获（诊断用，无网络上报） */
 window.__errs = [];
-window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + '@' + (l || 0) + ':' + (c || 0)); return false; };
+window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + ' @ ' + String(s || '?').split('/').slice(-2).join('/') + ':' + (l || 0) + ':' + (c || 0)); return false; };
 </script>
 </head>
 <body>
@@ -18,7 +18,7 @@ window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + '@' + (l
     <div class="start-inner">
       <div class="title-orb" id="title-orb"></div>
       <h1>微疫世界</h1>
-      <p class="subtitle">一个放在桌边、自己运行的小世界。你看一眼，就知道发生了什么。</p>
+      <p class="subtitle" id="start-sub">一个放在桌边、自己运行的小世界。你看一眼，就知道发生了什么。</p>
       <div class="start-actions">
         <button id="btn-start" class="btn-big">一键开始观察</button>
         <button id="btn-continue" class="btn-ghost hidden">继续上次观察</button>
@@ -26,6 +26,7 @@ window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + '@' + (l
           <button id="btn-setup" class="btn-ghost">高级设置</button>
           <button id="btn-about" class="btn-ghost">关于</button>
         </div>
+        <div class="start-row"><button id="btn-lang" class="btn-ghost btn-lang">EN</button></div>
       </div>
       <p class="start-foot">全自动 · 无需操作 · 默认一轮约45–120分钟 · 可随时暂停加速 · 所有数值均为玩法虚构</p>
     </div>
@@ -35,7 +36,7 @@ window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + '@' + (l
   <!-- ===== 高级设置屏 ===== -->
   <div id="screen-setup" class="screen hidden">
     <div class="panel-card wide">
-      <h2>开始一次新观察</h2>
+      <h2 id="setup-h">开始一次新观察</h2>
       <div class="form-grid">
         <label>场景
           <select id="sel-scenario"></select>
@@ -87,16 +88,17 @@ window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + '@' + (l
         <button id="btn-setup-start" class="btn-big">开始观察</button>
         <button id="btn-setup-back" class="btn-ghost">返回</button>
       </div>
+      <p class="start-foot" id="setup-foot">全自动 · 无需操作 · 默认一轮约45–120分钟 · 可随时暂停加速 · 所有数值均为玩法虚构</p>
     </div>
   </div>
 
   <!-- ===== 关于 ===== -->
   <div id="screen-about" class="screen hidden">
     <div class="panel-card">
-      <h2>关于《微疫世界》</h2>
-      <p class="about-p">原创离线单机观察游戏。受经典疫情模拟游戏的核心系统启发而做，但所有机制、文案、数值、地图轮廓均为原创或来自公有领域数据，未使用任何受版权保护的素材。</p>
-      <p class="about-p">世界人口、区域、异常类型与参数全部为<b>玩法虚构数据</b>，不代表任何真实统计，也不对应任何现实病原。地图轮廓来自 Natural Earth（公有领域），经简化重绘。</p>
-      <p class="about-p">本作不联网、不采集任何数据。存档保存在本机浏览器中。</p>
+      <h2 id="about-h">关于《微疫世界》</h2>
+      <p class="about-p" id="about-p1">原创离线单机观察游戏。受经典疫情模拟游戏的核心系统启发而做，但所有机制、文案、数值、地图轮廓均为原创或来自公有领域数据，未使用任何受版权保护的素材。</p>
+      <p class="about-p" id="about-p2">世界人口、区域、异常类型与参数全部为<b>玩法虚构数据</b>，不代表任何真实统计，也不对应任何现实病原。地图轮廓来自 Natural Earth（公有领域），经简化重绘。</p>
+      <p class="about-p" id="about-p3">本作不联网、不采集任何数据。存档保存在本机浏览器中。</p>
       <div class="form-actions"><button id="btn-about-back" class="btn-ghost">返回</button></div>
     </div>
   </div>
@@ -147,8 +149,11 @@ window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + '@' + (l
       <label class="ck"><input type="checkbox" id="ck-autoevo" checked> 自动演化（关闭后可手动购买特性）</label>
       <label class="ck"><input type="checkbox" id="ck-muted" checked> 静音（本作默认无声音）</label>
       <label class="ck"><input type="checkbox" id="ck-topmost-hint"> 置顶：请使用目录下“启动微疫世界.bat”启动（浏览器内置窗口无法自我置顶）</label>
-      <label>画质
+      <label id="lbl-quality">画质
         <select id="sel-quality"><option value="2">完整特效</option><option value="1">精简</option><option value="0">最低</option></select>
+      </label>
+      <label id="lbl-lang">Language / 语言
+        <select id="sel-lang"><option value="zh">中文</option><option value="en">English</option></select>
       </label>
       <div class="perf-line" id="perf-line"></div>
       <div class="form-actions"><button id="btn-set-close" class="btn-ghost">关闭</button></div>
@@ -212,6 +217,7 @@ window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + '@' + (l
 <script src="js/data/regions.js"></script>
 <script src="js/data/traits.js"></script>
 <script src="js/data/scenarios.js"></script>
+<script src="js/data/i18n.js"></script>
 <script src="js/core/world.js"></script>
 <script src="js/core/sim.js"></script>
 <script src="js/core/response.js"></script>

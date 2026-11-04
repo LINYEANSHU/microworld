@@ -25,7 +25,9 @@
 
   // ---------- 启动 ----------
   function boot() {
+    MW.LANG = settings.lang === 'en' ? 'en' : 'zh';
     applyMini();
+    if (typeof MW.applyLang === 'function') MW.applyLang();
     MW.Renderer.init($('map'));
     MW.Renderer.bindInput($('map'), MW.UI);
     MW.UI.fillSetup();
@@ -39,8 +41,11 @@
       setSpeed: setSpeed,
       setQuality: setQuality,
       toggleMini: toggleMini,
+      toggleLang: toggleLang,
+      setLang: setLang,
       perf: perfText
     });
+    $('sel-lang').value = MW.LANG;
     // 开始屏
     $('btn-start').onclick = function () {
       var o = defaultStart();
@@ -71,11 +76,23 @@
     } catch (e) { /* 存档损坏也不阻塞开始屏 */ }
     // 菜单
     $('mi-save').onclick = function () {
-      if (world) { var k = MW.saveWorld(world); MW.UI.toast(k ? '已保存' : '保存失败（存储空间不足？）', !k); }
+      if (world) { var k = MW.saveWorld(world); MW.UI.toast(k ? MW.T('toast.saved', '已保存') : MW.T('toast.saveFail', '保存失败（存储空间不足？）'), !k); }
     };
     $('mi-export').onclick = exportSave;
     $('mi-import').onclick = function () { $('file-import').click(); };
     $('file-import').onchange = importSave;
+    function toggleLang() { setLang(MW.LANG === 'en' ? 'zh' : 'en'); }
+    function setLang(l) {
+      MW.LANG = l === 'en' ? 'en' : 'zh';
+      settings.lang = MW.LANG;
+      MW.saveSettings(settings);
+      if (typeof MW.applyLang === 'function') MW.applyLang();
+      MW.UI.fillSetup();
+      MW.UI.updateHUD();
+      if (world) { MW.UI.pushNewsItem(world.news[world.news.length - 1] || { day: world.day, cat: '', text: '', sev: 1 }); }
+    }
+    $('btn-lang').onclick = toggleLang;
+    $('sel-lang').onchange = function () { setLang(this.value); };
     $('mi-quit').onclick = function () {
       if (world) MW.saveWorld(world);
       running = false;
@@ -129,7 +146,7 @@
     world._eventFreqSetting = o.eventFreq;
     world.speedIdx = o.speedIdx || 1;
     enterGame();
-    MW.UI.toast('观察开始：' + MW.REGIONS[world.stats.startRegion].name + '出现首个感染灶');
+    MW.UI.toast(MW.T('toast.obsStart', '观察开始：{r}出现首个感染灶', { r: MW.regionName(world.stats.startRegion) }));
   }
 
   function resumeFrom(w) {
@@ -190,7 +207,7 @@
           '已补算 ' + (catchupTotal - catchupQueue) + ' / ' + catchupTotal + ' 天');
         if (catchupQueue <= 0) {
           MW.UI.showCatchup(false);
-          MW.UI.toast('离线进度补算完成');
+          MW.UI.toast(MW.T('toast.catchupDone', '离线进度补算完成'));
           afterCatchup();
         }
         perf.tickMs = performance.now() - t1;
@@ -268,9 +285,8 @@
     perf.catchups++;
     var total = plan.ticks;
     var note = '';
-    if (plan.clipped) note += '离线时长超出上限（' + (settings.offCapH || 8) + '小时），超出部分不再逐日模拟。';
-    if (plan.approx) { note += ' 另有约 ' + plan.approxSteps * 7 + ' 天以“快速推进”方式跳过（近似处理，与实时运行不完全等价）。'; }
-    if (plan.tpsUnused) note = '';
+    if (plan.clipped) note += MW.T('catchup.clipped', '离线时长超出上限（{h}小时），超出部分不再逐日模拟。', { h: settings.offCapH || 8 });
+    if (plan.approx) note += ' ' + MW.T('catchup.approx', '另有约 {d} 天以“快速推进”方式跳过（近似处理，与实时运行不完全等价）。', { d: plan.approxSteps * 7 });
     if (plan.ticks > 240) {
       MW.UI.showCatchup(true);
       MW.UI.catchupProgress(0, total, note);
@@ -293,9 +309,9 @@
         steps -= s;
         if (steps > 0) requestAnimationFrame(chunk);
         else {
-          MW.pushNews(world, '系统', '离线期间部分时间以快速推进方式度过（近似处理）', 1);
+          MW.pushNews(world, '系统', MW.T('news.fastforward', '离线期间部分时间以快速推进方式度过（近似处理）'), 1);
           MW.saveWorld(world);
-          MW.UI.toast('快速推进完成：' + (world.flags.approxDays || 0) + ' 天被跳过');
+          MW.UI.toast(MW.T('toast.fastDone', '快速推进完成：{n} 天被跳过', { n: world.flags.approxDays || 0 }));
         }
       };
       chunk();
@@ -318,10 +334,10 @@
     world.stats.evoLastDay = world.day;
     MW.applyFxPublic(world.params, t);
     world.evoLog.push({
-      day: world.day, id: t.id, name: t.name, cost: t.cost,
-      reason: '观察者手动干预购买'
+      day: world.day, id: t.id, name: MW.traitName(t.id), cost: t.cost,
+      reason: MW.T('evo.manualReason', '观察者手动干预购买')
     });
-    MW.pushNews(world, '演化', '观察者主动引导异常演化出【' + t.name + '】', 1);
+    MW.pushNews(world, '演化', MW.T('evo.manual', '观察者主动引导异常演化出【{n}】', { n: MW.traitName(t.id) }), 1);
     MW.UI.renderTab();
   }
 
@@ -345,7 +361,8 @@
   }
   function applyMini() {
     document.body.classList.toggle('mini', !!settings.mini);
-    $('btn-mini').textContent = settings.mini ? '标准' : '迷你';
+    $('btn-mini').textContent = settings.mini ? MW.T('btn.standard', '标准') : MW.T('btn.mini', '迷你');
+    $('btn-menu').textContent = MW.T('btn.menu', '菜单');
   }
   function setQuality(q) {
     settings.quality = q;
@@ -384,8 +401,8 @@
       a.download = '微疫世界存档_' + world.seedStr + '_第' + world.day + '天.json';
       a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
-      MW.UI.toast('已导出存档文件');
-    } catch (e) { MW.UI.toast('导出失败：' + e.message, true); }
+      MW.UI.toast(MW.T('toast.exported', '已导出存档文件'));
+    } catch (e) { MW.UI.toast(MW.T('toast.exportFail', '导出失败：') + e.message, true); }
   }
   function importSave(evt) {
     var f = evt.target.files && evt.target.files[0];
@@ -397,9 +414,9 @@
         w._eventFreqSetting = settings.eventFreq || 1;
         world = w;
         enterGame();
-        MW.UI.toast('导入成功：继续第 ' + w.day + ' 天的观察');
+        MW.UI.toast(MW.T('toast.imported', '导入成功：继续第 {d} 天的观察', { d: w.day }));
       } catch (e) {
-        MW.UI.toast('导入失败：' + e.message, true); // 坏文件不影响现有存档
+        MW.UI.toast(MW.T('toast.importFail', '导入失败：') + e.message, true); // 坏文件不影响现有存档
       }
     };
     rd.readAsText(f);

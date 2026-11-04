@@ -370,15 +370,15 @@
     ctx.textAlign = 'center';
     for (i = 0; i < Math.min(N, arr.length); i++) {
       var rc = R.rc[arr[i][1]];
-      var name = MW.REGIONS[arr[i][1]].name;
+      var name = MW.regionName(arr[i][1]);
       ctx.fillStyle = 'rgba(210,236,240,0.82)';
       ctx.fillText(name, rc.cx, rc.cy - rc.sr - 5);
     }
-    if (R.hover >= 0 && (N < 1 || arr.every(function (x) { return x[1] !== R.hover; }) || true)) {
+    if (R.hover >= 0) {
       var rh = R.rc[R.hover];
       if (rh) {
         ctx.fillStyle = 'rgba(234,255,248,0.95)';
-        ctx.fillText(MW.REGIONS[R.hover].name, rh.cx, rh.cy - rh.sr - 5);
+        ctx.fillText(MW.regionName(R.hover), rh.cx, rh.cy - rh.sr - 5);
       }
     }
   }
