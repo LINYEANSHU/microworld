@@ -9,7 +9,7 @@
   <a href="#-tests--performance"><img src="https://img.shields.io/badge/rendering-CPU%20only·zero%20GPU-9adcf0" alt="CPU only"></a>
   <img src="https://img.shields.io/badge/network-fully%20offline-e8b45a" alt="offline">
   <img src="https://img.shields.io/badge/language-中%20%2F%20EN-b48cff" alt="i18n">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Unlicense-7fa8ad" alt="license"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-7fa8ad" alt="license"></a>
 </p>
 
 <p align="center">
@@ -94,7 +94,7 @@ Headless + real-browser verification, zero GPU dependency:
 
 ## License
 
-[Unlicense](LICENSE) (public-domain dedication — the most permissive option; no attribution required) · Map outlines from [Natural Earth](https://www.naturalearthdata.com/) (public domain), simplified and redrawn.
+[MIT](LICENSE) · Map outlines from [Natural Earth](https://www.naturalearthdata.com/) (public domain), simplified and redrawn.
 
 <p align="center">
   <a href="README.md">中文</a> · <b>English</b>

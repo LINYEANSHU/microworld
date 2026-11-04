@@ -9,7 +9,7 @@
   <a href="#-测试与性能"><img src="https://img.shields.io/badge/渲染-纯CPU·零GPU-9adcf0" alt="CPU only"></a>
   <img src="https://img.shields.io/badge/网络-完全离线-e8b45a" alt="offline">
   <img src="https://img.shields.io/badge/语言-中%20%2F%20EN-b48cff" alt="i18n">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Unlicense-7fa8ad" alt="license"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-7fa8ad" alt="license"></a>
 </p>
 
 <p align="center">
@@ -94,7 +94,7 @@
 
 ## License
 
-[Unlicense](LICENSE)（公有领域贡献——最开放协议，无需署名、随意使用） · 地图轮廓来自 [Natural Earth](https://www.naturalearthdata.com/)（公有领域），简化重绘。
+[MIT](LICENSE) · 地图轮廓来自 [Natural Earth](https://www.naturalearthdata.com/)（公有领域），简化重绘。
 
 <p align="center">
   <b>中文</b> · <a href="README.en.md">English</a>
