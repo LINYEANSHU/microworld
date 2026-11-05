@@ -100,7 +100,13 @@
 
   // ---------- HUD（低频更新） ----------
   var lastTot = { I: 0 };
+  UI._tlDirty = false; // 时间线待刷新标记（抽屉打开时新闻推送只标记，由 4Hz HUD 节拍统一重建）
   UI.updateHUD = function () {
+    // 时间线增量节流：新闻高频时避免每条都全量重建 ≤200 个 DOM 节点
+    if (UI._tlDirty) {
+      UI._tlDirty = false;
+      if (UI.tab === 'timeline' && !$('drawer').classList.contains('hidden')) renderTimeline();
+    }
     var w = UI.w; if (!w) return;
     var tot = w._tot; if (!tot) return;
     var pop0 = MW.WORLD_POP0;
@@ -150,7 +156,7 @@
     UI.tickerSev = item.sev;
     if (item.sev >= 2) MW.addNewsFx(UI.w, item);
     renderWhatnow();
-    if (UI.tab === 'timeline' && !$('drawer').classList.contains('hidden')) renderTimeline();
+    if (UI.tab === 'timeline' && !$('drawer').classList.contains('hidden')) UI._tlDirty = true;
   };
   function styleOf(w, n) {
     if (UI.style === 0 && n < 2) return null;
@@ -181,6 +187,7 @@
     document.querySelectorAll('.dtab').forEach(function (b) {
       b.classList.toggle('on', b.dataset.tab === UI.tab);
     });
+    UI._tlDirty = false; // 立即渲染即为最新，无需再等 4Hz 刷新
     renderTab();
   };
   UI.closeDrawer = function () {
@@ -198,8 +205,6 @@
     var rd = MW.REGIONS[id], r = UI.w.regions[id];
     var L = r.S + r.E + r.I + r.R + r.C;
     var prev = L > 0 ? (r.I + r.E) / L : 0;
-    var closures = [];
-    if (r.cA) closures.push(T('tl.cat.blockade', '封锁').indexOf('Closure') >= 0 ? 'Air' : '空');
     tip.innerHTML = '<b>' + MW.regionName(id) + '</b> <span class="dim">' + MW.climName(rd.clim) + ' · ' +
       T('region.pop', '人口') + U.fmtPop(L) + '</span><br>' +
       T('stat.inf', '感染') + ' <b>' + U.fmtPop(r.I + r.E) + '</b>（' + U.fmtPct(prev) + '）· ' +
@@ -263,6 +268,15 @@
     body.appendChild(el('div', 'kv', '<i>' + T('region.aid', '援助加成') + '</i><b>' + U.fmtPct(r.aid, 0) + '</b>'));
     body.appendChild(el('div', 'kv', '<i>' + T('region.camp', '卫生运动') + '</i><b>' + U.fmtPct(r.camp, 0) + '</b>'));
     body.appendChild(el('div', 'kv', '<i>' + T('region.output', '经济产出') + '</i><b>' + Math.round(r.outMul * 100) + '%</b>'));
+    // 手动干预（可选）：优先援助开关
+    var prioBtn = document.createElement('button');
+    prioBtn.className = 'btn-mini' + (UI.w.aidPriority === UI.sel ? ' on' : '');
+    prioBtn.textContent = UI.w.aidPriority === UI.sel ? T('region.aidUnset', '取消优先援助') : T('region.aidSet', '设为优先援助');
+    prioBtn.onclick = function () {
+      if (UI.hooks.setAidPriority) UI.hooks.setAidPriority(UI.sel);
+      renderTab(); // 重新渲染本页以反映状态
+    };
+    body.appendChild(prioBtn);
     var near = nearRegions(UI.sel);
     if (near.length) {
       body.appendChild(el('div', 'sec-title', T('region.neighbors', '邻接区域')));

@@ -42,6 +42,7 @@
     R.static_.width = c.width; R.static_.height = c.height;
     R.sctx = R.static_.getContext('2d', { willReadFrequently: true });
     R.needStatic = true;
+    updateWS();
     R.fitView();
     R.reproject();
   };
@@ -56,20 +57,30 @@
     }
   };
 
-  function worldSize() { return { w: R.W, h: R.W * (LAT_MAX - LAT_MIN) / (LON_MAX - LON_MIN) }; }
+  // 世界尺寸缓存：只依赖 R.W，仅在 resize 时变化。原 worldSize() 每次调用分配对象，
+  // 曾在每帧连接绘制中被 px() 间接调用 ~370 次 → 每帧上千个临时对象（GC 压力）。
+  var WS = { w: 0, h: 0 };
+  function updateWS() {
+    WS.w = R.W;
+    WS.h = R.W * (LAT_MAX - LAT_MIN) / (LON_MAX - LON_MIN);
+  }
   R.fitView = function () {
-    var sz = worldSize();
-    var s = R.H > 0 ? Math.min(R.W / sz.w, (R.H - 40) / sz.h) : 1;
+    var s = R.H > 0 ? Math.min(R.W / WS.w, (R.H - 40) / WS.h) : 1;
     R.view.s = s * 1.06;
-    R.view.x = (R.W - sz.w * R.view.s) / 2;
-    R.view.y = (R.H - sz.h * R.view.s) / 2 + 14;
+    R.view.x = (R.W - WS.w * R.view.s) / 2;
+    R.view.y = (R.H - WS.h * R.view.s) / 2 + 14;
     R.needStatic = true;
   };
-  function px(lon, lat) {
+  // 热路径版本：写入调用方提供的暂存数组，零分配（算式与 px 完全一致）
+  function pxInto(lon, lat, out) {
     var x = (lon - LON_MIN) / (LON_MAX - LON_MIN);
     var y = (LAT_MAX - lat) / (LAT_MAX - LAT_MIN);
-    return [R.view.x + x * worldSize().w * R.view.s, R.view.y + y * worldSize().h * R.view.s];
+    out[0] = R.view.x + x * WS.w * R.view.s;
+    out[1] = R.view.y + y * WS.h * R.view.s;
+    return out;
   }
+  function px(lon, lat) { return pxInto(lon, lat, [0, 0]); }
+  var _pa = [0, 0], _pb = [0, 0]; // 每帧热路径共用暂存（同帧内两处独立使用时各自成对）
 
   R.bindInput = function (canvas, ui) {
     var drag = null;
@@ -177,6 +188,7 @@
       });
     }
     R.fx = []; R.trav = [];
+    R._labels.day = -1; R._labels.list = []; // 换世界后强制重算标签候选
   };
   function anomColor(w) {
     for (var i = 0; i < MW.ANOMALIES.length; i++) if (MW.ANOMALIES[i].id === w.anomalyId) return MW.ANOMALIES[i].color;
@@ -229,8 +241,8 @@
         var a = MW.REGIONS[lk.a], b = MW.REGIONS[lk.b];
         var src = w.regions[lk.a], dst = w.regions[lk.b];
         var dirAtoB = (src.I + src.E) > (dst.I + dst.E);
-        var pa = px(dirAtoB ? a.lon : b.lon, dirAtoB ? a.lat : b.lat);
-        var pb = px(dirAtoB ? b.lon : a.lon, dirAtoB ? a.lat : a.lat);
+        var pa = pxInto(dirAtoB ? a.lon : b.lon, dirAtoB ? a.lat : b.lat, _pa);
+        var pb = pxInto(dirAtoB ? b.lon : a.lon, dirAtoB ? a.lat : a.lat, _pb);
         R.trav.push({
           x0: pa[0], y0: pa[1], x1: pb[0], y1: pb[1],
           t: 0, dur: lk.type === 2 ? 2.2 : (lk.type === 1 ? 3.4 : 2.8),
@@ -275,7 +287,7 @@
         var lk = links[i];
         var blocked = lk.cls[lk.type] === 0;
         var a = MW.REGIONS[lk.a], b = MW.REGIONS[lk.b];
-        var pa = px(a.lon, a.lat), pb = px(b.lon, b.lat);
+        var pa = pxInto(a.lon, a.lat, _pa), pb = pxInto(b.lon, b.lat, _pb);
         ctx.strokeStyle = blocked ? 'rgba(150,120,120,0.10)' :
           (lk.type === 2 ? 'rgba(140,200,225,0.13)' : (lk.type === 1 ? 'rgba(110,190,170,0.12)' : 'rgba(180,170,140,0.10)'));
         ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke();
@@ -356,21 +368,29 @@
     drawLabels(ctx, t);
   };
 
+  // 标签候选表缓存：感染数只随 simTick 变化（≤8Hz），无需每帧重建+排序。
+  // 以 world.day 为失效依据（暂停时数据不变，命中缓存也正确）。
+  R._labels = { day: -1, list: [] };
   function drawLabels(ctx, t) {
     var w = R.world; if (!w) return;
     var mini = document.body.classList.contains('mini');
     var N = R.quality === 0 ? 3 : (mini ? 3 : 8);
-    var arr = [];
-    for (var i = 0; i < w.regions.length; i++) {
-      var v = w.regions[i].I + w.regions[i].E;
-      if (v > 100) arr.push([v, i]);
+    if (R._labels.day !== w.day) {
+      var arr = [];
+      for (var i = 0; i < w.regions.length; i++) {
+        var v = w.regions[i].I + w.regions[i].E;
+        if (v > 100) arr.push([v, i]);
+      }
+      arr.sort(function (a, b) { return b[0] - a[0]; });
+      R._labels.day = w.day;
+      R._labels.list = arr;
     }
-    arr.sort(function (a, b) { return b[0] - a[0]; });
+    var list = R._labels.list;
     ctx.font = '11px "Segoe UI","Microsoft YaHei",sans-serif';
     ctx.textAlign = 'center';
-    for (i = 0; i < Math.min(N, arr.length); i++) {
-      var rc = R.rc[arr[i][1]];
-      var name = MW.regionName(arr[i][1]);
+    for (var i2 = 0; i2 < Math.min(N, list.length); i2++) {
+      var rc = R.rc[list[i2][1]];
+      var name = MW.regionName(list[i2][1]);
       ctx.fillStyle = 'rgba(210,236,240,0.82)';
       ctx.fillText(name, rc.cx, rc.cy - rc.sr - 5);
     }

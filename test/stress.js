@@ -14,7 +14,7 @@ load('../js/data/traits.js'); load('../js/data/scenarios.js');
 load('../js/data/i18n.js');
 load('../js/core/world.js'); load('../js/core/sim.js'); load('../js/core/response.js');
 load('../js/core/evolution.js'); load('../js/core/events.js'); load('../js/core/endings.js');
-load('../js/core/catchup.js'); load('../js/core/persist.js');
+load('../js/core/catchup.js'); load('../js/core/persist.js'); load('../js/core/workshop.js');
 
 var MW = globalThis.MW;
 var U = MW.U;

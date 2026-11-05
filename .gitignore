@@ -9,3 +9,7 @@ desktop.ini
 
 # 临时
 *.tmp
+
+# 本地报告与日志（不上传）
+OPTIMIZATION-REPORT.md
+test/stress-final.log

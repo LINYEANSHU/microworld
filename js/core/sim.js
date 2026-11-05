@@ -58,9 +58,13 @@
     var worldPop0 = MW.WORLD_POP0;
 
     // —— 第一遍：出口暴露压 + 缓存 ——
+    // 暴露/传播压缓冲按世界复用（不进存档；fill(0) 与新建零填充语义一致，确定性不变）
     var i, r, rd, L, prev;
-    var expI = new Float64Array(R.length);
-    var expC = new Float64Array(R.length);
+    var buf = w._fb;
+    if (!buf || buf.n < R.length) {
+      buf = w._fb = { n: R.length, expI: new Float64Array(R.length), expC: new Float64Array(R.length), pIn: new Float64Array(R.length) };
+    }
+    var expI = buf.expI, expC = buf.expC;
     for (i = 0; i < R.length; i++) {
       r = R[i];
       L = r.S + r.E + r.I + r.R + r.C;
@@ -71,7 +75,8 @@
     }
 
     // —— 第二遍：连接传播压 ——
-    var pIn = new Float64Array(R.length);
+    var pIn = buf.pIn;
+    for (i = 0; i < R.length; i++) pIn[i] = 0;
     for (i = 0; i < LN.length; i++) {
       var lk = LN[i];
       var t = lk.type;
@@ -199,9 +204,13 @@
     if (w.news.length > 400) w.news.splice(0, w.news.length - 400);
     if (w.evoLog.length > 200) w.evoLog.splice(0, w.evoLog.length - 200);
 
-    // —— 修正到期清理 ——
+    // —— 修正到期清理（原地压实：保持顺序，避免每 tick 重建数组） ——
     if (w.mods.length) {
-      w.mods = w.mods.filter(function (m) { return m.until >= day; });
+      var k2 = 0;
+      for (i = 0; i < w.mods.length; i++) {
+        if (w.mods[i].until >= day) w.mods[k2++] = w.mods[i];
+      }
+      w.mods.length = k2;
     }
 
     MW.endingCheck(w);

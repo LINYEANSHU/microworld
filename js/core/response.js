@@ -56,12 +56,13 @@
       if (r.camp < 0) r.camp = 0;
     }
 
-    // —— 援助分配（每3天） ——
+    // —— 援助分配（每3天；观察者优先指示对评分 ×2.5，不突破容量上限） ——
     if (w.day % 3 === 0 && w.aidPool > 8) {
       var cand = [];
       for (i = 0; i < R.length; i++) {
         r = R[i]; rd = REG[i];
         var score = r.sev * ((6 - rd.med) / 5) * Math.max(0.05, 1 - r.aid / 1.2) * (r._L > 1e5 ? 1 : 0);
+        if (w.aidPriority === i) score *= 2.5;
         if (score > 0.0005) cand.push([score, i]);
       }
       cand.sort(function (a, b) { return b[0] - a[0]; });

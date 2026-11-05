@@ -77,7 +77,7 @@
       ap: 0, evoCd: 0,
       regions: regions, links: links,
       research: { progress: 0, deployed: false, deployedDay: -1 },
-      aidPool: 0,
+      aidPool: 0, aidPriority: -1,
       mods: [], eventCd: {},
       rngS: rng.getState(), rngEv: rngEv.getState(), rngEvo: rngEvo.getState(),
       hist: { t: [], inf: [], dead: [], cure: [], aw: [], pop: [] },
@@ -139,7 +139,7 @@
         return [r.S, r.E, r.I, r.R, r.D, r.C, r.aw, r.aid, r.camp, r.outMul, r.cA ? 1 : 0, r.cS ? 1 : 0, r.cL ? 1 : 0, r.lastAidNews || 0];
       }),
       links: w.links.map(function (l) { return l.cls; }),
-      research: w.research, aidPool: w.aidPool,
+      research: w.research, aidPool: w.aidPool, aidPriority: w.aidPriority | 0,
       mods: w.mods, eventCd: w.eventCd,
       rng: [w.rngS, w.rngEv, w.rngEvo],
       hist: w.hist, news: w.news, evoLog: w.evoLog,
@@ -176,6 +176,9 @@
     }
     w.links = links;
     w.research = o.research; w.aidPool = +o.aidPool || 0;
+    // 手动援助优先级（v3 新增可选字段；旧存档缺省 → -1，无优先）
+    w.aidPriority = (typeof o.aidPriority === 'number' && isFinite(o.aidPriority) &&
+      o.aidPriority >= -1 && o.aidPriority < R.length) ? (o.aidPriority | 0) : -1;
     w.mods = Array.isArray(o.mods) ? o.mods : [];
     w.eventCd = o.eventCd || {};
     w.rngS = o.rng[0] >>> 0; w.rngEv = o.rng[1] >>> 0; w.rngEvo = o.rng[2] >>> 0;
@@ -193,6 +196,23 @@
       }
     }
     return w;
+  };
+
+  // —— 手动干预（可选深度）：指定某区域优先获得援助 ——
+  // idx=-1 取消；非法 idx 拒绝并返回 false。纯状态标记，分配加权在 response.js。
+  MW.setAidPriority = function (w, idx) {
+    if (!w || w.flags.ended) return false;
+    if (idx === -1 || idx === undefined || idx === null) {
+      if (w.aidPriority === -1) return true; // 幂等
+      w.aidPriority = -1;
+      MW.pushNews(w, '援助', MW.T('aidprio.off', '观察者撤回了优先援助指示'), 1);
+      return true;
+    }
+    if (typeof idx !== 'number' || !isFinite(idx) || (idx | 0) !== idx || idx < 0 || idx >= MW.REGIONS.length) return false;
+    if (w.aidPriority === idx) return true; // 幂等
+    w.aidPriority = idx | 0;
+    MW.pushNews(w, '援助', MW.T('aidprio.on', '观察者指示：{r}获得援助优先权', { r: MW.regionName(idx) }), 1);
+    return true;
   };
 
   MW.rngOf = function (w, which) {

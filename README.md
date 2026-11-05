@@ -5,8 +5,9 @@
 </p>
 
 <p align="center">
-  <a href="#-测试与性能"><img src="https://img.shields.io/badge/测试-26%2B10%20项全绿-4fd8b0" alt="测试"></a>
-  <a href="#-测试与性能"><img src="https://img.shields.io/badge/渲染-纯CPU·零GPU-9adcf0" alt="CPU only"></a>
+  <a href="https://github.com/LINYEANSHU/microworld/actions/workflows/ci.yml"><img src="https://github.com/LINYEANSHU/microworld/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="#测试与性能"><img src="https://img.shields.io/badge/测试-32%2B10%20项全绿-4fd8b0" alt="测试"></a>
+  <a href="#测试与性能"><img src="https://img.shields.io/badge/渲染-纯CPU·零GPU-9adcf0" alt="CPU only"></a>
   <img src="https://img.shields.io/badge/网络-完全离线-e8b45a" alt="offline">
   <img src="https://img.shields.io/badge/语言-中%20%2F%20EN-b48cff" alt="i18n">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-7fa8ad" alt="license"></a>
@@ -49,7 +50,11 @@
 | 🟢 **雾潮** | 随湿热季风涨落的季节脉冲，海运通道是它的血管 | | 🟠 **蚀纹** | 几乎不致死，却静默侵蚀经济与科研能力 |
 | 🟪 **共鸣** | 高密度城市间共鸣放大，随机“齐鸣”式超级传播 | | 🔴 **焰袭** | 烈而速，易感烧尽后自我反噬，通道断绝可自熄 |
 
-6 个原创场景（3 档复杂度）· 43 条事件（全部有触发条件、后果与冷却）· 6 种结局走向（传播 / 受控 / 根除 / 覆没 / 晶界 / 自熄…），同种子可复现、跨种子走向不同。
+6 个原创场景（3 档复杂度）· 49 条事件（全部有触发条件、后果与冷却）· 6 种结局走向（传播 / 受控 / 根除 / 覆没 / 晶界 / 自熄…），同种子可复现、跨种子走向不同。
+
+**创意工坊（本地场景包）**：菜单 →「导入场景包」加载 JSON 场景包（校验从严：未知参数、越界数值、非法 id 一律拒绝），导入后与内置场景走完全相同的合成路径，跨会话保留，可再导出分享；开发者可用 `node tools/sweep.js` 对任意场景组合做百分位平衡扫描。
+
+**可选手动干预**：区域详情里「设为优先援助」，该区域在自动援助分配中获得优先权（评分 ×2.5，不突破容量上限）——默认仍是全自动零操作。
 
 ## 快速开始
 
@@ -75,10 +80,10 @@
 
 | 指标 | 实测 |
 |---|---|
-| 常规回归 | 26/26 通过（守恒、同种子复现、帧率无关、演化合法性、存档一致、补算不重复…） |
+| 常规回归 | 32/32 通过（守恒、同种子复现、帧率无关、演化合法性、存档一致、补算不重复、场景包校验、援助优先级…） |
 | 无头压力 | 10/10 通过：2万日浸泡、72局全矩阵、3303万日补算风暴账目分毫不差、100世界交错 |
 | 真实浏览器 | 无GPU下 176 FPS（单帧 0.55ms）、存档往返 200/200、JS 堆零增长 |
-| 一轮时长 | 平均 2739 天 ≈ **46 分钟（1×）**，四种以上结局自然涌现 |
+| 一轮时长 | 平均 2709 天 ≈ **45 分钟（1×）**，四种以上结局自然涌现 |
 
 > 诚实说明：浏览器方案进程树内存 ≈740–780 MiB（Chromium 运行时基线），超出 512 MiB 预算目标；游戏自身 <40 MiB。详见 [未完成清单](docs/未完成清单.md)。
 
@@ -92,9 +97,15 @@
 - ❌ 不冒充真实统计：人口、区域、异常均为玩法虚构数据，不对应任何现实病原
 - ❌ 不做成屏保：有真实可暂停、可复盘的模拟；也不重新变成需要频繁点击的策略游戏
 
+## 参考与致谢
+
+- **玩法灵感**：受 Mondo Medicals 风格的《瘟疫公司 Plague Inc》（Ndemic Creations）核心系统启发——仅机制层面的借鉴与重构，**无任何素材复用**（不使用其名称、美术、地图、音效或文案）。
+- **地图轮廓**：[world-atlas](https://github.com/topojson/world-atlas)（MIT）打包的 [Natural Earth](https://www.naturalearthdata.com/) 110m 陆地数据（公有领域），简化重绘为本作虚构的 80 区域背景。
+- **技术栈**：原生 JavaScript + Canvas 2D——零第三方运行时依赖、零构建步骤，模拟与渲染全部手写实现。
+
 ## License
 
-[MIT](LICENSE) · 地图轮廓来自 [Natural Earth](https://www.naturalearthdata.com/)（公有领域），简化重绘。
+[MIT](LICENSE)
 
 <p align="center">
   <b>中文</b> · <a href="README.en.md">English</a>

@@ -30,6 +30,7 @@
     if (typeof MW.applyLang === 'function') MW.applyLang();
     MW.Renderer.init($('map'));
     MW.Renderer.bindInput($('map'), MW.UI);
+    try { MW.Packs.restore(); } catch (e) { /* 场景包损坏不阻塞启动 */ }
     MW.UI.fillSetup();
     MW.UI.initSettings(settings);
     MW.UI.bind({
@@ -37,6 +38,7 @@
       isAutoEvo: function () { return _autoevoSetting; },
       onAutoEvo: function (v) { _autoevoSetting = v; settings.autoEvo = v; MW.saveSettings(settings); },
       manualBuy: manualBuy,
+      setAidPriority: setAidPriority,
       togglePause: togglePause,
       setSpeed: setSpeed,
       setQuality: setQuality,
@@ -81,6 +83,8 @@
     $('mi-export').onclick = exportSave;
     $('mi-import').onclick = function () { $('file-import').click(); };
     $('file-import').onchange = importSave;
+    $('mi-pack').onclick = function () { $('file-pack').click(); };
+    $('file-pack').onchange = importPack;
     function toggleLang() { setLang(MW.LANG === 'en' ? 'zh' : 'en'); }
     function setLang(l) {
       MW.LANG = l === 'en' ? 'en' : 'zh';
@@ -341,6 +345,13 @@
     MW.UI.renderTab();
   }
 
+  // ---------- 手动干预（可选）：优先援助 ----------
+  function setAidPriority(idx) {
+    if (!world) return;
+    var okp = MW.setAidPriority(world, idx);
+    MW.UI.toast(okp ? MW.T('aidprio.toast', '已更新援助优先级') : MW.T('aidprio.bad', '无效的区域'), !okp);
+  }
+
   // ---------- 速度 / 暂停 / 迷你 / 画质 ----------
   function togglePause() {
     if (!world) return;
@@ -417,6 +428,24 @@
         MW.UI.toast(MW.T('toast.imported', '导入成功：继续第 {d} 天的观察', { d: w.day }));
       } catch (e) {
         MW.UI.toast(MW.T('toast.importFail', '导入失败：') + e.message, true); // 坏文件不影响现有存档
+      }
+    };
+    rd.readAsText(f);
+    evt.target.value = '';
+  }
+
+  // ---------- 场景包导入（创意工坊，本地文件） ----------
+  function importPack(evt) {
+    var f = evt.target.files && evt.target.files[0];
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      try {
+        var id = MW.Packs.importPack(rd.result);
+        MW.UI.fillSetup(); // 新场景立即可选
+        MW.UI.toast(MW.T('pack.imported', '场景包已导入：{id}', { id: id }));
+      } catch (e) {
+        MW.UI.toast(MW.T('pack.importFail', '场景包导入失败：') + e.message, true);
       }
     };
     rd.readAsText(f);

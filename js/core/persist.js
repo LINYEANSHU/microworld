@@ -24,10 +24,17 @@
     return { fmt: 'microworld', v: MW.SAVE_VERSION, seq: w.seq, t: Date.now(), ck: U.fnv1a(payload), payload: payload };
   }
 
+  // 只序列化信封字段：env._w 仅是配额裁剪重试用的内存引用，
+  // 若被 JSON.stringify 一并写入，整个 world 会随 payload 双份落盘（体积×2、速度×0.5）。
+  // 读取端（loadWorld/importSave）只认 fmt/v/seq/t/ck/payload，因此剥离 _w 完全兼容新旧存档。
+  function cleanEnv(env) {
+    return { fmt: env.fmt, v: env.v, seq: env.seq, t: env.t, ck: env.ck, payload: env.payload };
+  }
+
   function writeSlot(key, env) {
     var s = store();
     try {
-      s.setItem(key, JSON.stringify(env));
+      s.setItem(key, JSON.stringify(cleanEnv(env)));
       return true;
     } catch (e) {
       // 配额不足：裁剪历史后重试一次
@@ -40,7 +47,7 @@
           return w2;
         })(env._w)));
         env.ck = U.fnv1a(env.payload);
-        s.setItem(key, JSON.stringify(env));
+        s.setItem(key, JSON.stringify(cleanEnv(env)));
         return true;
       } catch (e2) { return false; }
     }

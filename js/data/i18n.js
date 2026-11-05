@@ -95,6 +95,7 @@
     'btn.pause': 'II',
     // 菜单
     'menu.save': 'Save game', 'menu.export': 'Export save (file)', 'menu.import': 'Import save (file)',
+    'menu.pack': 'Import scenario pack (workshop)',
     'menu.perf': 'Performance', 'menu.settings': 'Settings', 'menu.quit': 'End session · back to start',
     // 设置浮层
     'set.title': 'Settings',
@@ -130,6 +131,9 @@
     'region.pop': 'Population', 'region.dead': 'Deaths', 'region.comp': 'Composition',
     'region.resp': 'Response state', 'region.closures': 'Closures', 'region.none': 'None',
     'region.aware': 'Alertness', 'region.aid': 'Aid bonus', 'region.camp': 'Hygiene', 'region.output': 'Economy',
+    'region.aidSet': 'Set priority aid', 'region.aidUnset': 'Unset priority aid',
+    'aidprio.on': 'Observer directive: {r} receives aid priority', 'aidprio.off': 'Observer withdrew the aid priority directive',
+    'aidprio.toast': 'Aid priority updated', 'aidprio.bad': 'Invalid region',
     'region.neighbors': 'Connected regions',
     'tag.urban': 'Urban', 'tag.med': 'Med', 'tag.res': 'Res',
     'evo.points': 'Points', 'evo.mode': 'Mode', 'evo.auto': 'Auto (scored decisions)', 'evo.manual': 'Manual',
@@ -165,6 +169,7 @@
     'catchup.title': 'Catching up offline progress…',
     'catchup.done': 'of', 'catchup.days': ' days',
     'toast.saved': 'Saved', 'toast.saveFail': 'Save failed (storage full?)',
+    'pack.imported': 'Scenario pack imported: {id}', 'pack.importFail': 'Scenario pack rejected: ',
     'toast.exported': 'Save exported', 'toast.exportFail': 'Export failed: ',
     'toast.imported': 'Imported: resuming day {d}', 'toast.importFail': 'Import failed: ',
     'toast.catchupDone': 'Offline progress caught up',
@@ -308,6 +313,12 @@
       memorial: { name: 'Memorial Day', news: 'Global public-health memorial day: outreach events held' },
       mutation: { name: 'Random Mutation', news: 'A more transmissible variant detected (+12% transmission, 40 days)', news2: 'A less transmissible variant detected (-10% transmission, 40 days)', news3: 'A variant disrupts research models (research -8%, 40 days)' },
       treaty: { name: 'Cross-border Treaty', news: 'Cross-border cooperation treaty signed: data and aid flow freely' },
+      quarantine_lift: { name: 'Reopening Wave', news: 'Fatigue shows: {n} traffic controls lifted all on the same day' },
+      aid_convoy: { name: 'Aid Convoy', news: 'International aid convoys reach the staging point: aid pool expanded at once' },
+      sabbatical: { name: 'Academic Sabbatical', news: 'Core team on two-week rotation rest: research pace slows' },
+      blackout: { name: 'City Blackout Curfew', news: '{r} imposes a blackout curfew: night traffic and nightlife shrink together' },
+      crystal_thaw: { name: 'Crystal Thaw', news: 'Interventions take hold: vast crystal shells begin thawing back into the recovered' },
+      harvest_festival: { name: 'Harvest Festival', news: 'Harvest festival opens: markets and parades veil the alertness for a while' },
       cats: { '封锁': 'Closures', '援助': 'Aid', '研究': 'Research', '异常': 'Anomaly', '演化': 'Evolution', '自然': 'Nature', '社会': 'Society', '医疗': 'Medical', '系统': 'System', '自然 ': 'Nature' }
     },
     endings: {
@@ -367,6 +378,7 @@
     set('mi-save', 'menu.save', '保存存档');
     set('mi-export', 'menu.export', '导出存档（文件）');
     set('mi-import', 'menu.import', '导入存档（文件）');
+    set('mi-pack', 'menu.pack', '导入场景包（创意工坊）');
     set('mi-perf', 'menu.perf', '性能统计');
     set('mi-settings', 'menu.settings', '设置');
     set('mi-quit', 'menu.quit', '结束观察 · 回到首页');

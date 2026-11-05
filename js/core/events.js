@@ -160,7 +160,47 @@
       } },
     { id: 'treaty', name: '跨境协作条约', cat: '系统', p: 0.004, cd: 150,
       when: function (w) { return w._awG > 0.6; },
-      apply: function (w) { w.aidPool += 50; mod(w, 30, { g: { research: 1.1 } }); MW.pushNews(w, '系统', N('treaty', '跨境协作条约签署：数据与援助互通')); } }
+      apply: function (w) { w.aidPool += 50; mod(w, 30, { g: { research: 1.1 } }); MW.pushNews(w, '系统', N('treaty', '跨境协作条约签署：数据与援助互通')); } },
+    // —— 精进阶段新增（6条，2026-11） ——
+    { id: 'quarantine_lift', name: '解封浪潮', cat: '系统', p: 0.004, cd: 120,
+      when: function (w) { return w._awG < 0.25 && anyRegion(w, function (r) { return r.cA || r.cS || r.cL; }) >= 0; },
+      apply: function (w) {
+        var n = 0;
+        for (var i = 0; i < w.regions.length; i++) {
+          if (w.regions[i].cA) { w.regions[i].cA = false; n++; }
+          if (w.regions[i].cS) { w.regions[i].cS = false; n++; }
+          if (w.regions[i].cL) { w.regions[i].cL = false; n++; }
+        }
+        MW.pushNews(w, '封锁', N('quarantine_lift', '疲态显现：{n}处交通管制在同一天全部解除', { n: n }), 2);
+      } },
+    { id: 'aid_convoy', name: '国际援助车队', cat: '援助', p: 0.005, cd: 60,
+      when: function (w) { return w._awG > 0.4 && w.aidPool < 40; },
+      apply: function (w) { w.aidPool += 45; MW.pushNews(w, '援助', N('aid_convoy', '跨国援助车队抵达集结点：援助池一次性扩充')); } },
+    { id: 'sabbatical', name: '学术休假', cat: '医疗', p: 0.004, cd: 80,
+      when: function (w) { return w.research.progress > 0.2 && !w.research.deployed; },
+      apply: function (w) { mod(w, 15, { g: { research: 0.95 } }); MW.pushNews(w, '研究', N('sabbatical', '核心团队轮休两周：研究节奏放缓')); } },
+    { id: 'blackout', name: '都市灯火管制', cat: '社会', p: 0.005, cd: 70,
+      when: function (w) { return topRegion(w, function (r, i) { return MW.REGIONS[i].urb > 0.7 ? r.I : -1; }) >= 0; },
+      apply: function (w) {
+        var i = topRegion(w, function (r, k) { return MW.REGIONS[k].urb > 0.7 ? r.I : -1; });
+        mod(w, 8, { rg: rg1(i, { beta: 0.85 }), trav: [0.85, 1.0, 1.0] });
+        MW.pushNews(w, '社会', N('blackout', '{r}实施灯火管制：夜间人流与夜间经济同步收缩', { r: R(w, i) }));
+      } },
+    { id: 'crystal_thaw', name: '晶壳融解', cat: '异常', p: 0.005, cd: 120,
+      when: function (w) { return w.params.crystal > 0 && w.research.deployed && w._tot && w._tot.C > 5e5; },
+      apply: function (w) {
+        var moved = 0;
+        for (var i = 0; i < w.regions.length; i++) {
+          var r = w.regions[i];
+          var x = r.C * 0.02; if (x > r.C) x = r.C;
+          if (x > 0) { r.C -= x; r.R += x; moved += x; }
+        }
+        MW.pushNews(w, '异常', N('crystal_thaw', '干预方案起效：大片晶壳开始融解回康复群体', null), 1);
+        return moved; // 可观测：晶化载体下降
+      } },
+    { id: 'harvest_festival', name: '丰收祭', cat: '自然', p: 0.006, cd: 70,
+      when: function (w) { return wet(w); },
+      apply: function (w) { mod(w, 7, { trav: [1.25, 1.1, 1.3], g: { aw: -0.05 } }); MW.pushNews(w, '自然', N('harvest_festival', '丰收祭开幕：集市与庆典暂掩了警觉')); } }
   ];
 
   // 事件引擎：每 tick 依次判定。事件 apply 只允许使用传入的 rng（保证可单测、可复现）。

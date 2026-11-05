@@ -13,10 +13,11 @@ load('../js/data/traits.js'); load('../js/data/scenarios.js');
 load('../js/data/i18n.js');
 load('../js/core/world.js'); load('../js/core/sim.js'); load('../js/core/response.js');
 load('../js/core/evolution.js'); load('../js/core/events.js'); load('../js/core/endings.js');
-load('../js/core/catchup.js'); load('../js/core/persist.js');
+load('../js/core/catchup.js'); load('../js/core/persist.js'); load('../js/core/workshop.js');
 
 var MW = globalThis.MW;
 var U = MW.U;
+var sweep = require(path.join(__dirname, '../tools/sweep.js')); // 平衡扫描（编程接口）
 
 var passed = 0, failed = 0, failures = [];
 function T(name, fn) {
@@ -266,13 +267,178 @@ T('锚点先行：同一段时间不会推进两次', function () {
   eq(w.day, dayAfterFirst + plan2.ticks, '时间只前进一次');
 });
 
+console.log('== 创意工坊（场景包） ==');
+T('合法场景包：注册→运行→存档往返一致→导出再导入', function () {
+  MW.clearScenarioPacks();
+  var r = MW.registerScenario({
+    id: 'pack_test', name: '包测试', desc: '校验器回归用场景包', complexity: 1,
+    anomaly: 'fog', startRule: 'coast', startSeedE: 90,
+    mods: { params: { beta: 1.2, climAff1: 1.3, seaAff: 1.15 }, aiAggr: 1.2, researchMult: 0.9, apMul: 1.1, eventFreq: 1.5 }
+  });
+  ok(r.ok, '注册失败: ' + (r.err || ''));
+  var s = MW.scenById('pack_test');
+  ok(s && s._pack, '应能按 id 取到包场景');
+  ok(s.startSeedE === 90 && s.mods.params.beta === 1.2, '归一化字段完整');
+  var w = makeW({ scenario: 'pack_test', seedStr: 'pkg' });
+  ok(w.anomalyId === 'fog' && w.params.beta !== undefined, '包场景合成初始世界');
+  runTicks(w, 300);
+  var snap = JSON.parse(JSON.stringify(MW.serialize(w)));
+  var w2 = MW.deserialize(snap);
+  ok(w2, '包世界反序列化失败');
+  runTicks(w, 200); runTicks(w2, 200);
+  eq(stateHash(w), stateHash(w2), '包场景存档往返后轨迹分叉');
+  // 导出 → 卸载 → 再导入（用户分享链路的本地闭环）
+  var text = MW.Packs.exportPack('pack_test');
+  ok(MW.unregisterScenario('pack_test'), '卸载包场景');
+  ok(!MW.SCENARIOS.some(function (x) { return x.id === 'pack_test'; }), '卸载后不在场景表');
+  var thrown = 0;
+  try { MW.Packs.exportPack('pack_test'); } catch (e) { thrown = 1; }
+  ok(thrown, '导出已卸载的包应抛错');
+  eq(MW.Packs.importPack(text), 'pack_test', '重新导入成功');
+  ok(MW.scenById('pack_test')._pack, '再导入后可用');
+  MW.clearScenarioPacks();
+});
+T('非法场景包被拒绝且不污染场景表；持久化可恢复', function () {
+  MW.clearScenarioPacks();
+  var before = MW.SCENARIOS.length;
+  function pack(def) { return JSON.stringify({ pack: 'microworld-scenpack', v: 1, scenario: def }); }
+  var bad = [
+    'not json at all',
+    '{}',
+    pack(null),
+    pack({ id: 'BAD ID', name: 'x', desc: 'x', complexity: 0, anomaly: 'fog' }),
+    pack({ id: 'okid1', name: 'x', desc: 'x', complexity: 0, anomaly: 'nope' }),
+    pack({ id: 'std', name: 'x', desc: 'x', complexity: 0, anomaly: 'fog' }),
+    pack({ id: 'okid2', name: 'x', desc: 'x', complexity: 5, anomaly: 'fog' }),
+    pack({ id: 'okid3', name: 'x', desc: 'x', complexity: 0, anomaly: 'fog', mods: { params: { betaX: 2 } } }),
+    pack({ id: 'okid4', name: 'x', desc: 'x', complexity: 0, anomaly: 'fog', mods: { params: { beta: 999 } } }),
+    pack({ id: 'okid5', name: 'x', desc: 'x', complexity: 0, anomaly: 'fog', mods: { aiAggr: 99 } }),
+    pack({ id: 'okid6', name: 'x', desc: 'x', complexity: 0, anomaly: 'fog', startRule: 'moon' }),
+    pack({ id: 'okid7', name: '', desc: 'x', complexity: 0, anomaly: 'fog' })
+  ];
+  var caught = 0;
+  for (var i = 0; i < bad.length; i++) {
+    try { MW.Packs.importPack(bad[i]); } catch (e) { caught++; }
+  }
+  eq(caught, bad.length, '所有非法包都应抛错');
+  eq(MW.SCENARIOS.length, before, '场景表不应增长');
+  // 持久化：注册→保存→清空→恢复
+  ok(MW.registerScenario({ id: 'pack_persist', name: '持久包', desc: '跨会话恢复测试', complexity: 0, anomaly: 'cry' }).ok, '注册');
+  ok(MW.Packs.save(), '保存包列表');
+  eq(MW.clearScenarioPacks(), 1, '清空内存包');
+  eq(MW.SCENARIOS.length, before, '恢复前应只剩内置场景');
+  eq(MW.Packs.restore(), 1, '恢复 1 个包');
+  ok(MW.scenById('pack_persist')._pack, '恢复后可用');
+  MW.Packs.clearStored();
+  MW.clearScenarioPacks();
+});
+
+console.log('== 手动干预（援助优先级） ==');
+T('setAidPriority 校验：非法区域拒绝、-1 取消、幂等、序列化往返', function () {
+  var w = makeW({ seedStr: 'prio-val', anomaly: 'fog' });
+  ok(MW.setAidPriority(w, 3.5) === false, '小数应拒绝');
+  ok(MW.setAidPriority(w, 80) === false, '越界应拒绝');
+  ok(MW.setAidPriority(w, -2) === false, '负数越界应拒绝');
+  eq(w.aidPriority, -1, '状态未被污染');
+  ok(MW.setAidPriority(w, 7) && w.aidPriority === 7, '合法设置');
+  ok(MW.setAidPriority(w, 7) && w.aidPriority === 7, '重复设置幂等');
+  ok(MW.setAidPriority(w, -1) && w.aidPriority === -1, '取消');
+  MW.setAidPriority(w, 12);
+  var w2 = MW.deserialize(JSON.parse(JSON.stringify(MW.serialize(w))));
+  eq(w2.aidPriority, 12, '往返保留');
+  var o = JSON.parse(JSON.stringify(MW.serialize(w)));
+  delete o.aidPriority; // 模拟旧版本存档缺字段
+  eq(MW.deserialize(o).aidPriority, -1, '旧存档缺省为 -1');
+});
+T('援助优先级生效：低排名区域被提升进分配名单且不突破容量', function () {
+  // 固定种子实证配置：day450 时评分第7名的区域，无优先时排不进前6（0.352），有优先时显著更多（0.569）
+  var a = makeW({ seedStr: 'prio-run', anomaly: 'res' });
+  var b = makeW({ seedStr: 'prio-run', anomaly: 'res' });
+  runTicks(a, 450); runTicks(b, 450);
+  function mirrorScores(w2) {
+    var out = [];
+    for (var i = 0; i < w2.regions.length; i++) {
+      var r = w2.regions[i], rd = MW.REGIONS[i];
+      out.push([r.sev * ((6 - rd.med) / 5) * Math.max(0.05, 1 - r.aid / 1.2) * (r._L > 1e5 ? 1 : 0), i]);
+    }
+    out.sort(function (x, y) { return y[0] - x[0]; });
+    return out;
+  }
+  var ranked = mirrorScores(a).filter(function (x) { return x[0] > 0.0005; });
+  ok(ranked.length > 8, '候选区域应足够多');
+  var k = ranked[7][1]; // 第7名：无优先时恰好被前6 cutoff 挡住
+  a.aidPool = 600; b.aidPool = 600; // 注满资金池，只考察分配规则
+  ok(MW.setAidPriority(a, k), '设置优先');
+  var gotA = 0, gotB = 0;
+  for (var d = 0; d < 3; d++) { MW.simTick(a); MW.simTick(b); gotA += a.regions[k].aid; gotB += b.regions[k].aid; }
+  ok(gotA > gotB + 0.05, '优先区域累计援助应显著更高: A=' + gotA.toFixed(3) + ' B=' + gotB.toFixed(3));
+  ok(a.regions[k].aid <= 1.2 + 1e-9, '不突破容量上限');
+  // 取消后不再加权（与对照一致地自然衰减）
+  MW.setAidPriority(a, -1);
+  ok(a.aidPriority === -1, '已取消');
+});
+
+console.log('== 新增事件（精进阶段） ==');
+T('6条新事件强制触发：效果可观测且守恒不破坏', function () {
+  var NEW_IDS = ['quarantine_lift', 'aid_convoy', 'sabbatical', 'blackout', 'crystal_thaw', 'harvest_festival'];
+  var seen = {};
+  MW.EVENTS.forEach(function (e) { seen[e.id] = 1; });
+  NEW_IDS.forEach(function (id) { ok(seen[id], '缺少新事件 ' + id); });
+  var w = makeW({ seedStr: 'newev', anomaly: 'cry' });
+  runTicks(w, 450);
+  w.research.deployed = true; // 使 crystal_thaw 的干预语境成立
+  var rng = new MW.Rng(7);
+  var pops = MW.REGIONS.map(function (r) { return r.pop0; });
+  function sumC() { var s = 0; for (var q = 0; q < w.regions.length; q++) s += w.regions[q].C; return s; }
+  for (var i = 0; i < MW.EVENTS.length; i++) {
+    var ev = MW.EVENTS[i];
+    if (NEW_IDS.indexOf(ev.id) < 0) continue;
+    var bNews = w.news.length, bMods = w.mods.length, bAid = w.aidPool;
+    var bC = sumC();
+    if (ev.id === 'quarantine_lift') { w.regions[3].cA = true; w.regions[3].cS = true; }
+    if (ev.id === 'crystal_thaw') { // 注入晶化载体（受易感余量约束，保持守恒）
+      var inj = Math.min(2e6, w.regions[1].S * 0.5);
+      w.regions[1].S -= inj; w.regions[1].C += inj; bC = sumC();
+    }
+    try { ev.apply(w, rng); } catch (e) { throw new Error('新事件 ' + ev.id + ' apply 抛错: ' + e.message); }
+    var effect = w.news.length > bNews || w.mods.length > bMods || w.aidPool !== bAid ||
+      (ev.id === 'quarantine_lift' && !w.regions[3].cA && !w.regions[3].cS) ||
+      (ev.id === 'crystal_thaw' && sumC() < bC * 0.985); // 晶壳融解固定转移2%，留3%边距
+    ok(effect, '新事件 ' + ev.id + ' 无可观测效果');
+    // 守恒：每区域 S+E+I+R+D+C 与人口一致
+    for (var q2 = 0; q2 < w.regions.length; q2++) {
+      var r2 = w.regions[q2];
+      var tot2 = r2.S + r2.E + r2.I + r2.R + r2.D + r2.C;
+      near(tot2, pops[q2], pops[q2] * 1e-9 + 1e-3, '守恒破坏 @' + ev.id + ' r' + q2 + ': ');
+    }
+  }
+  runTicks(w, 30); // 混入真实 tick 循环无副作用
+  for (var q3 = 0; q3 < w.regions.length; q3++) {
+    var r3 = w.regions[q3];
+    var comps = [r3.S, r3.E, r3.I, r3.R, r3.D, r3.C];
+    for (var k2 = 0; k2 < 6; k2++) ok(isFinite(comps[k2]) && comps[k2] >= 0, '非有限/负状态 @r' + q3);
+  }
+});
+
+console.log('== 平衡扫描工具 ==');
+T('sweep.runBatch 小批量确定性与百分位计算', function () {
+  var s1 = sweep.runBatch({ scenarios: ['std'], anomalies: ['fog', 'res'], seeds: 2, maxDays: 800 });
+  var s2 = sweep.runBatch({ scenarios: ['std'], anomalies: ['fog', 'res'], seeds: 2, maxDays: 800 });
+  eq(s1.total, 4, '局数');
+  ok(s1.daysP50 > 0 && s1.daysP90 >= s1.daysP50 && s1.daysP50 >= s1.daysP10, '百分位单调');
+  eq(JSON.stringify(s1.endingKinds), JSON.stringify(s2.endingKinds), '结局分布应确定');
+  eq(s1.daysP50, s2.daysP50, 'P50 应确定');
+  near(sweep.percentile([1, 2, 3, 4], 0.5), 2.5, 1e-12, '百分位插值');
+  near(sweep.percentile([5], 0.9), 5, 1e-12, '单元素百分位');
+});
+
 console.log('== 离线启动/无网络 ==');
 T('全部源码无网络调用', function () {
   var root = path.join(__dirname, '..');
   var files = ['js/ns.js', 'js/rng.js', 'js/data/land.js', 'js/data/regions.js', 'js/data/traits.js',
     'js/data/scenarios.js', 'js/core/world.js', 'js/core/sim.js', 'js/core/response.js',
     'js/core/evolution.js', 'js/core/events.js', 'js/core/endings.js', 'js/core/catchup.js',
-    'js/core/persist.js', 'index.html'];
+    'js/core/persist.js', 'js/core/workshop.js', 'tools/sweep.js', 'index.html'];
   var bad = [];
   files.forEach(function (f) {
     var txt = fs.readFileSync(path.join(root, f), 'utf8');
