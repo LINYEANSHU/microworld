@@ -142,6 +142,7 @@
       var sv = +spd[i].dataset.s;
       var on = sv === 0 ? UI.hooks.isPaused() : (sv === (w.speedIdx || 1) && !UI.hooks.isPaused());
       spd[i].classList.toggle('on', on);
+      spd[i].setAttribute('aria-pressed', String(on));
     }
   };
 
@@ -465,8 +466,13 @@
     $('drawer-close').onclick = UI.closeDrawer;
     $('drawer-open').onclick = function () { UI.openDrawer(); };
     $('ticker').onclick = function () { UI.openDrawer('timeline'); };
-    $('whatnow-head').onclick = function () { $('whatnow').classList.toggle('folded'); };
-    $('whatnow-toggle').onclick = function (e) { e.stopPropagation(); $('whatnow').classList.toggle('folded'); };
+    $('whatnow-head').onclick = function () {
+      var folded = $('whatnow').classList.toggle('folded');
+      this.setAttribute('aria-expanded', String(!folded));
+    };
+    $('whatnow-head').onkeydown = function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); this.click(); }
+    };
     $('ck-autoevo').onchange = function () { if (UI.hooks.onAutoEvo) UI.hooks.onAutoEvo(this.checked); };
     $('btn-menu').onclick = function (e) { e.stopPropagation(); $('menu-pop').classList.toggle('hidden'); $('pop-settings').classList.add('hidden'); };
     $('mi-settings').onclick = function () { $('pop-settings').classList.toggle('hidden'); };
@@ -482,6 +488,7 @@
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { $('menu-pop').classList.add('hidden'); $('pop-settings').classList.add('hidden'); }
+      if (e.target.closest('input, textarea, select, button, [role="button"]') || e.target.isContentEditable) return;
       if (e.key === ' ' && UI.hooks.togglePause) { e.preventDefault(); UI.hooks.togglePause(); }
       if (e.key >= '1' && e.key <= '4' && UI.hooks.setSpeed) UI.hooks.setSpeed([1, 2, 4, 8][+e.key - 1]);
     });

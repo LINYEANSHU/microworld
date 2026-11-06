@@ -105,7 +105,7 @@ window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + ' @ ' + 
 
   <!-- ===== 游戏屏 ===== -->
   <div id="screen-game" class="hidden">
-    <canvas id="map"></canvas>
+    <canvas id="map" aria-label="世界区域地图"></canvas>
 
     <div id="hud-top">
       <div class="hud-left">
@@ -163,7 +163,7 @@ window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + ' @ ' + 
 
     <!-- 刚才发生了什么 -->
     <div id="whatnow">
-      <div id="whatnow-head">刚才发生了什么 <b id="whatnow-toggle">▾</b></div>
+      <div id="whatnow-head" role="button" tabindex="0" aria-expanded="true" aria-controls="whatnow-body">刚才发生了什么 <b id="whatnow-toggle" aria-hidden="true">▾</b></div>
       <div id="whatnow-body"></div>
     </div>
 
@@ -210,7 +210,7 @@ window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + ' @ ' + 
     </div>
   </div>
 
-  <div id="toasts"></div>
+  <div id="toasts" role="status" aria-live="polite"></div>
 </div>
 
 <script src="js/ns.js"></script>
@@ -228,6 +228,7 @@ window.onerror = function (m, s, l, c) { window.__errs.push(String(m) + ' @ ' + 
 <script src="js/core/endings.js"></script>
 <script src="js/core/catchup.js"></script>
 <script src="js/core/persist.js"></script>
+<script src="js/core/workshop.js"></script>
 <script src="js/ui/render.js"></script>
 <script src="js/ui/ui.js"></script>
 <script src="js/ui/main.js"></script>

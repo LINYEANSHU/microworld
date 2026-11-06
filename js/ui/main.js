@@ -12,6 +12,7 @@
   var world = null;
   var running = false;
   var paused = false;
+  var resumeSpeed = 1;
   var hiddenAt = 0;
   var lastFrame = 0;
   var debt = 0;            // 待消耗 tick 债务（有上限）
@@ -163,7 +164,9 @@
 
   function enterGame() {
     running = true;
-    paused = false;
+    paused = world.speedIdx === 0;
+    resumeSpeed = world.speedIdx || settings.speedDefault || 1;
+    debt = 0; lastFrame = 0; catchupQueue = -1;
     MW.UI.show('screen-game');
     MW.UI.style = (settings.style === undefined ? 1 : settings.style);
     MW.UI.bindWorld(world);
@@ -313,14 +316,16 @@
         steps -= s;
         if (steps > 0) requestAnimationFrame(chunk);
         else {
+          catchupQueue = -1;
           MW.pushNews(world, '系统', MW.T('news.fastforward', '离线期间部分时间以快速推进方式度过（近似处理）'), 1);
           MW.saveWorld(world);
           MW.UI.toast(MW.T('toast.fastDone', '快速推进完成：{n} 天被跳过', { n: world.flags.approxDays || 0 }));
         }
       };
       chunk();
-    } else if (world._catchupNote) {
-      MW.UI.toast(world._catchupNote.trim());
+    } else {
+      catchupQueue = -1;
+      if (world._catchupNote) MW.UI.toast(world._catchupNote.trim());
     }
     world._catchupNote = '';
   }
@@ -355,13 +360,17 @@
   // ---------- 速度 / 暂停 / 迷你 / 画质 ----------
   function togglePause() {
     if (!world) return;
-    paused = !paused;
-    MW.UI.updateHUD();
+    setSpeed(paused ? resumeSpeed : 0);
   }
   function setSpeed(s) {
     if (!world) return;
+    if (MW.SPEEDS.indexOf(s) < 0) return;
+    if (s === 0 && world.speedIdx > 0) resumeSpeed = world.speedIdx;
     paused = (s === 0);
-    if (s > 0) world.speedIdx = s;
+    world.speedIdx = s;
+    // Persist pause itself so hidden/reloaded worlds cannot accrue offline ticks.
+    world.wallAnchor = Date.now();
+    MW.saveWorld(world);
     MW.UI.updateHUD();
   }
   function toggleMini() {

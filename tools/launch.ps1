@@ -20,9 +20,8 @@ $browsers = @(
 )
 $browser = $browsers | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $browser) {
-  Write-Host "未找到 Edge/Chrome，使用默认浏览器打开（无置顶能力）。"
-  Start-Process $html
-  exit 0
+  Write-Host "未找到 Edge/Chrome。请使用已关闭 GPU 加速的浏览器手动打开：$html"
+  exit 1
 }
 
 # 2. 以 app 模式 + 独立配置目录启动
@@ -42,7 +41,8 @@ $launchArgs = @(
   '--no-first-run',
   '--no-default-browser-check'
 )
-if ($NoGpu) { $launchArgs += @('--disable-gpu', '--disable-gpu-compositing') }  # 纯CPU渲染（训练占用GPU时用）
+# Both launchers default to CPU rendering; -NoGpu remains accepted for old shortcuts.
+$launchArgs += @('--disable-gpu', '--disable-gpu-compositing', '--disable-webgl')
 Start-Process -FilePath $browser -ArgumentList $launchArgs | Out-Null
 
 # 3. 记忆窗口尺寸（app 模式允许页面自行 resize；这里兜底记录）

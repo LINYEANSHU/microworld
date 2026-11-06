@@ -84,11 +84,14 @@
 
   R.bindInput = function (canvas, ui) {
     var drag = null;
-    canvas.addEventListener('mousedown', function (e) {
+    canvas.addEventListener('pointerdown', function (e) {
+      if (!e.isPrimary || e.button !== 0) return;
+      canvas.setPointerCapture(e.pointerId);
       drag = { x: e.clientX, y: e.clientY, vx: R.view.x, vy: R.view.y, moved: false };
       canvas.classList.add('grabbing');
     });
-    window.addEventListener('mousemove', function (e) {
+    canvas.addEventListener('pointermove', function (e) {
+      if (!e.isPrimary) return;
       if (drag) {
         var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
         if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
@@ -99,13 +102,21 @@
         if (ui) ui.hover(R.hover, e.clientX, e.clientY);
       }
     });
-    window.addEventListener('mouseup', function (e) {
+    canvas.addEventListener('pointerup', function (e) {
+      if (!e.isPrimary) return;
       if (drag && !drag.moved) {
         var id = R.pick(e.clientX, e.clientY);
         if (ui) ui.select(id);
       }
       drag = null;
       canvas.classList.remove('grabbing');
+    });
+    canvas.addEventListener('pointercancel', function () {
+      drag = null;
+      canvas.classList.remove('grabbing');
+    });
+    canvas.addEventListener('pointerleave', function () {
+      if (!drag) { R.hover = -1; if (ui) ui.hover(-1, 0, 0); }
     });
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();

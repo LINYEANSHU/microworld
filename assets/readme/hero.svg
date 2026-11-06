@@ -36,13 +36,13 @@
       <rect x="0" y="232" rx="15" width="150" height="34" fill="none" stroke="#78c8dc" stroke-opacity="0.3"/>
       <text x="24" y="255">零操作全自动</text>
       <rect x="166" y="232" rx="15" width="176" height="34" fill="none" stroke="#78c8dc" stroke-opacity="0.3"/>
-      <text x="190" y="255">一轮 45–120 分钟</text>
+      <text x="190" y="255">随时暂停与变速</text>
       <rect x="358" y="232" rx="15" width="122" height="34" fill="none" stroke="#78c8dc" stroke-opacity="0.3"/>
       <text x="382" y="255">纯 CPU 运行</text>
       <rect x="0" y="276" rx="15" width="110" height="34" fill="none" stroke="#78c8dc" stroke-opacity="0.3"/>
       <text x="24" y="299">完全离线</text>
       <rect x="126" y="276" rx="15" width="122" height="34" fill="none" stroke="#78c8dc" stroke-opacity="0.3"/>
-      <text x="150" y="299">60 FPS 地图</text>
+      <text x="150" y="299">Canvas 2D</text>
     </g>
   </g>
 
