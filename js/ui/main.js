@@ -74,7 +74,7 @@
         $('btn-continue').classList.remove('hidden');
         $('btn-continue').onclick = function () { resumeFrom(r.world); };
         $('start-news').classList.remove('hidden');
-        $('start-news').textContent = '上次观察：' + U.fmtDay(r.world.day) + ' · ' + MW.scenById(r.world.scenarioId).name;
+        $('start-news').textContent = MW.T('start.lastObs', '上次观察：{d} · {s}', { d: U.fmtDay(r.world.day), s: MW.scenById(r.world.scenarioId).name });
       }
     } catch (e) { /* 存档损坏也不阻塞开始屏 */ }
     // 菜单
@@ -155,11 +155,12 @@
   }
 
   function resumeFrom(w) {
+    var prevAnchor = w.wallAnchor || Date.now();
     world = w;
     world._eventFreqSetting = settings.eventFreq || 1;
     enterGame();
-    // 恢复时的离线补算（锚点先行）
-    scheduleCatchup(Date.now() - (w.wallAnchor || Date.now()));
+    // 恢复时的离线补算（锚点先行：先用旧锚点计算离线时长，enterGame 已写入新锚点）
+    scheduleCatchup(Date.now() - prevAnchor);
   }
 
   function enterGame() {
@@ -211,7 +212,7 @@
         // 补算期间的视觉更新压到每帧一次
         MW.Renderer.onSimTick(world);
         MW.UI.catchupProgress(catchupTotal - catchupQueue, catchupTotal,
-          '已补算 ' + (catchupTotal - catchupQueue) + ' / ' + catchupTotal + ' 天');
+          MW.T('catchup.progress', '已补算 {done} / {total} 天', { done: catchupTotal - catchupQueue, total: catchupTotal }));
         if (catchupQueue <= 0) {
           MW.UI.showCatchup(false);
           MW.UI.toast(MW.T('toast.catchupDone', '离线进度补算完成'));
@@ -334,10 +335,11 @@
   function manualBuy(traitId) {
     var t = null;
     for (var i = 0; i < MW.TRAITS.length; i++) if (MW.TRAITS[i].id === traitId) t = MW.TRAITS[i];
-    if (!t || world.ap < t.cost) { MW.UI.toast('适应点不足', true); return; }
+    if (!t || world.ap < t.cost) { MW.UI.toast(MW.T('evo.noAp', '适应点不足'), true); return; }
     var ownedSet = {};
     world.owned.forEach(function (x) { ownedSet[x] = true; });
-    for (var k = 0; k < t.req.length; k++) if (!ownedSet[t.req[k]]) { MW.UI.toast('前置未满足', true); return; }
+    if (ownedSet[t.id]) { MW.UI.toast(MW.T('evo.alreadyOwned', '已拥有该特质'), true); return; }
+    for (var k = 0; k < t.req.length; k++) if (!ownedSet[t.req[k]]) { MW.UI.toast(MW.T('evo.noReq', '前置未满足'), true); return; }
     world.ap -= t.cost;
     world.owned.push(t.id);
     world.stats.evoLastDay = world.day;

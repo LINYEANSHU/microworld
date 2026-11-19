@@ -133,7 +133,8 @@
   // —— 设置（窗口尺寸记忆、画质、离线上限、观察风格等） ——
   var DEF_SETTINGS = {
     mini: false, quality: 2, offCapH: 8, style: 1, eventFreq: 1,
-    winW: 1024, winH: 640, muted: false, speedDefault: 1
+    winW: 1024, winH: 640, muted: false, speedDefault: 1,
+    lang: 'zh', autoEvo: true
   };
   MW.loadSettings = function () {
     var s = store(), o = null;
