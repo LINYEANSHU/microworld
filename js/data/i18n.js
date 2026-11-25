@@ -97,6 +97,7 @@
     'menu.save': 'Save game', 'menu.export': 'Export save (file)', 'menu.import': 'Import save (file)',
     'menu.pack': 'Import scenario pack (workshop)',
     'menu.perf': 'Performance', 'menu.settings': 'Settings', 'menu.quit': 'End session · back to start',
+    'menu.quitUnsaved': 'Saving failed. Returning to the start screen will discard unsaved progress. Return anyway?',
     // 设置浮层
     'set.title': 'Settings',
     'set.autoevo': 'Auto-evolution (turn off to buy traits manually)',

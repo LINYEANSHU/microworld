@@ -100,10 +100,10 @@
     $('btn-lang').onclick = toggleLang;
     $('sel-lang').onchange = function () { setLang(this.value); };
     $('mi-quit').onclick = function () {
-      if (world && !checkpoint(true)) return;
+      if (world && !checkpoint(false) && !window.confirm(MW.T('menu.quitUnsaved',
+        '保存失败。返回首页将丢失未保存的进度。仍要返回吗？'))) return;
       running = false;
       MW.UI.show('screen-start');
-      location.reload ? null : null;
       setTimeout(function () { location.reload(); }, 50);
     };
     $('btn-end-continue').onclick = function () { $('overlay-ending').classList.add('hidden'); };
