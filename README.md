@@ -8,16 +8,24 @@
 80 个虚构区域里的异常传播、自动演化、人类研究与援助同时推进。
 你可以只看新闻与地图，也可以暂停、加速，或为某个区域指定优先援助。
 
-<img src="assets/readme/current-desktop.png" width="100%" alt="2026-11-06 当前游戏界面：深海色世界地图、区域航线、顶部五项统计与速度控制，底部可展开新闻">
+## Windows 下载
+
+**[下载 Windows x64 便携版（ZIP）](https://github.com/LINYEANSHU/microworld/releases/download/windows-v1.0.0/microworld-windows-x64.zip)** · [发布说明](https://github.com/LINYEANSHU/microworld/releases/tag/windows-v1.0.0)
+
+完整解压 ZIP，进入 `MicroWorld` 文件夹并双击 `MicroWorld.exe`，然后点击「一键开始观察」。移动游戏时请保留整个文件夹。
+
+<img src="assets/readme/windows-desktop.webp" width="100%" alt="MicroWorld Windows 桌面版的观察地图，显示区域航线、速度控制和底部新闻">
 
 <details>
-<summary>查看窄屏界面（390 × 844）</summary>
+<summary>查看浏览器界面（桌面与窄屏）</summary>
+
+<img src="assets/readme/current-desktop.png" width="100%" alt="浏览器桌面布局，显示世界地图、顶部统计和速度控制">
 
 <img src="assets/readme/current-mobile.png" width="390" alt="窄屏微疫世界：状态与速度分行，世界地图居中，新闻面板位于底部">
 
-</details>
-
 截图来自 2026-11-06 的桌面 Edge 审查，已关闭 GPU、GPU 合成及 WebGL；窄屏截图不是实机手机测试。
+
+</details>
 
 ## 一轮世界里会发生什么
 
@@ -29,7 +37,7 @@
 
 这是一款虚构模拟游戏。人口、区域、异常及参数用于玩法，不是现实疾病预测。
 
-## 快速开始
+## 从源码运行浏览器版
 
 无需安装依赖或构建。Windows 10/11 上准备 Edge 或 Chrome，然后：
 
@@ -42,7 +50,7 @@ git clone https://github.com/LINYEANSHU/microworld.git
 cd microworld
 ```
 
-两个 Windows 启动器现在均默认禁用 GPU、GPU 合成和 WebGL。
+两个浏览器启动脚本均默认禁用 GPU、GPU 合成和 WebGL。
 `启动微疫世界_无GPU.bat` 保留为兼容入口；使用独立浏览器配置，与日常浏览器分开。
 启动器会尝试置顶；不需要时可运行：
 
@@ -57,6 +65,8 @@ node tools/serve.js
 ```
 
 打开 `http://127.0.0.1:8391`。文件模式、HTTP 地址与不同浏览器配置可能使用不同存档空间。
+
+在 Windows x64 上使用 Node.js 24 运行 `node desktop/build.cjs`，桌面包生成到 `desktop/dist/`。[桌面构建脚本](desktop/build.cjs)
 
 ## 观察操作
 
@@ -75,7 +85,7 @@ node tools/serve.js
 
 运行时每 45 秒自动保存；菜单也可立即保存、导出或导入 JSON。
 存档含模拟时间、随机数状态、事件与历史，使用 `localStorage` 双槽轮换和校验和。
-导出文件适合备份与跨配置迁移；清理网站数据前请先导出。
+Windows 桌面版默认在 `%APPDATA%\Entertainment Desktop\microworld` 保存数据。可通过导出文件备份或迁移存档。
 
 隐藏或关闭后恢复时按时间补算，默认最多 8 小时，可选 4/12 小时；暂停不累计进度。
 全量补算有 tick 预算，预算内按日模拟，剩余部分按周近似并标注；超过离线上限的时间不继续补算。

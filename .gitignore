@@ -13,3 +13,9 @@ desktop.ini
 # 本地报告与日志（不上传）
 OPTIMIZATION-REPORT.md
 test/stress-final.log
+
+# Generated Windows desktop artifacts
+/desktop/.cache/
+/desktop/dist/
+/desktop/qa/
+/desktop/node_modules/

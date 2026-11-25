@@ -1,0 +1,11 @@
+{
+  "id": "microworld",
+  "name": "MicroWorld 微疫世界",
+  "exe": "MicroWorld",
+  "static": [
+    "index.html",
+    "css",
+    "js"
+  ],
+  "background": "#101b1b"
+}

@@ -8,16 +8,24 @@
 Anomaly spread, automatic evolution, human research and aid unfold across 80 fictional regions.
 Watch the news and map, pause or accelerate time, or prioritize aid for a region.
 
-<img src="assets/readme/current-desktop.png" width="100%" alt="Current interface, November 6, 2026: a deep-ocean world map with regional routes, five top statistics, speed controls and expandable news">
+## Download for Windows
+
+**[Download the portable Windows x64 build (ZIP)](https://github.com/LINYEANSHU/microworld/releases/download/windows-v1.0.0/microworld-windows-x64.zip)** · [Release notes](https://github.com/LINYEANSHU/microworld/releases/tag/windows-v1.0.0)
+
+Extract the entire ZIP, open the `MicroWorld` folder, double-click `MicroWorld.exe`, and choose “One-Click Observe”. Keep the folder together when moving the game.
+
+<img src="assets/readme/windows-desktop.webp" width="100%" alt="MicroWorld for Windows showing the observation map, regional routes, speed controls and bottom news panel">
 
 <details>
-<summary>View the narrow layout (390 × 844)</summary>
+<summary>View the browser layouts (desktop and narrow)</summary>
+
+<img src="assets/readme/current-desktop.png" width="100%" alt="Desktop browser layout showing the world map, top statistics and speed controls">
 
 <img src="assets/readme/current-mobile.png" width="390" alt="Narrow MicroWorld layout: wrapped statistics and speed controls, a central map and a bottom news panel">
 
-</details>
-
 Captured during the November 6, 2026 desktop Edge review with GPU, GPU compositing and WebGL disabled. The narrow viewport is not a physical-phone test.
+
+</details>
 
 ## What unfolds in a round
 
@@ -29,7 +37,7 @@ Captured during the November 6, 2026 desktop Edge review with GPU, GPU compositi
 
 This is a fictional simulation game. Its populations, regions, anomalies and parameters are gameplay data, not real disease predictions.
 
-## Getting started
+## Run the browser version from source
 
 No dependency installation or build is needed. On Windows 10/11 with Edge or Chrome:
 
@@ -42,7 +50,7 @@ git clone https://github.com/LINYEANSHU/microworld.git
 cd microworld
 ```
 
-Both Windows launchers now disable GPU, GPU compositing and WebGL by default.
+Both browser launch scripts disable GPU, GPU compositing and WebGL by default.
 `启动微疫世界_无GPU.bat` remains a compatible entry point. They use a separate browser profile from your everyday browsing.
 The launcher attempts to keep the window on top. To disable that behavior:
 
@@ -57,6 +65,8 @@ node tools/serve.js
 ```
 
 Open `http://127.0.0.1:8391`. File mode, HTTP addresses and browser profiles may have separate save storage.
+
+On Windows x64 with Node.js 24, run `node desktop/build.cjs` to produce the desktop package in `desktop/dist/`. [Desktop build script](desktop/build.cjs)
 
 ## Observation controls
 
@@ -75,7 +85,7 @@ Open `http://127.0.0.1:8391`. File mode, HTTP addresses and browser profiles may
 
 The running game autosaves every 45 seconds; the menu also offers immediate saving and JSON export/import.
 Saves include simulation time, RNG state, events and history, using two rotating `localStorage` slots with checksums.
-Export a file for backups or migration before clearing site data.
+The Windows app stores data in `%APPDATA%\Entertainment Desktop\microworld` by default. Export a file for backups or migration.
 
 Resuming after hiding or closing catches up elapsed time, capped at 8 hours by default, with 4/12-hour options. Paused worlds accrue no progress.
 Daily simulation has a tick budget; the remainder advances in explicitly marked weekly approximations. Time beyond the offline cap is discarded.
