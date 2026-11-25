@@ -108,6 +108,7 @@
       if (UI.tab === 'timeline' && !$('drawer').classList.contains('hidden')) renderTimeline();
     }
     var w = UI.w; if (!w) return;
+    updateReliefControls();
     var tot = w._tot; if (!tot) return;
     var pop0 = MW.WORLD_POP0;
     $('hud-day').textContent = U.fmtDay(w.day);
@@ -274,10 +275,21 @@
     prioBtn.className = 'btn-mini' + (UI.w.aidPriority === UI.sel ? ' on' : '');
     prioBtn.textContent = UI.w.aidPriority === UI.sel ? T('region.aidUnset', '取消优先援助') : T('region.aidSet', '设为优先援助');
     prioBtn.onclick = function () {
-      if (UI.hooks.setAidPriority) UI.hooks.setAidPriority(UI.sel);
+      if (UI.hooks.setAidPriority) UI.hooks.setAidPriority(UI.w.aidPriority === UI.sel ? -1 : UI.sel);
       renderTab(); // 重新渲染本页以反映状态
     };
     body.appendChild(prioBtn);
+    var relief = el('div', 'kv relief-controls', '<i id="relief-status"></i>');
+    var send = el('button', 'btn-mini', T('relief.send', '派送应急补给'));
+    send.id = 'relief-send';
+    send.type = 'button';
+    send.onclick = function () {
+      if (UI.hooks.sendRelief) UI.hooks.sendRelief(UI.sel);
+      renderTab();
+    };
+    relief.appendChild(send);
+    body.appendChild(relief);
+    updateReliefControls();
     var near = nearRegions(UI.sel);
     if (near.length) {
       body.appendChild(el('div', 'sec-title', T('region.neighbors', '邻接区域')));
@@ -289,6 +301,21 @@
           (p > 0.0001 ? U.fmtPct(p) : '—') + '</b>'));
       });
     }
+  }
+  function updateReliefControls() {
+    if (UI.sel < 0 || UI.tab !== 'region') return;
+    var button = $('relief-send'), text = $('relief-status');
+    if (!button || !text) return;
+    var w = UI.w, state = MW.reliefStatus(w, UI.sel);
+    var label = {
+      unavailable: '观察已定格', cooldown: '还需等待 {days} 天', capacity: '该地区补给充足',
+      stock: '库存 {stock} / {cost}', ready: '消耗 {cost} 补给（库存 {stock}）'
+    };
+    var value = T('relief.' + state, label[state], {
+      days: w.reliefReadyDay - w.day, stock: Math.floor(w.aidPool), cost: MW.RELIEF_COST
+    });
+    if (text.textContent !== value) text.textContent = value;
+    button.disabled = state !== 'ready';
   }
   function anomCss(w) {
     for (var i = 0; i < MW.ANOMALIES.length; i++) if (MW.ANOMALIES[i].id === w.anomalyId) return MW.ANOMALIES[i].color;

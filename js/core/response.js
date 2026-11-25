@@ -4,6 +4,26 @@
 (function () {
   var MW = globalThis.MW;
   var U = MW.U;
+  var RELIEF_COST = 3, RELIEF_GRANT = 0.35, RELIEF_INTERVAL = 14, AID_CAP = 1.2;
+  MW.RELIEF_COST = RELIEF_COST;
+
+  MW.reliefStatus = function (w, index) {
+    if (!w || w.flags.ended || !Number.isInteger(index) || !w.regions[index]) return 'unavailable';
+    if (w.day < w.reliefReadyDay) return 'cooldown';
+    if (w.aidPool < RELIEF_COST) return 'stock';
+    if (w.regions[index].aid > AID_CAP - 0.05) return 'capacity';
+    return 'ready';
+  };
+
+  MW.sendRelief = function (w, index) {
+    if (MW.reliefStatus(w, index) !== 'ready') return false;
+    w.aidPool -= RELIEF_COST;
+    w.reliefReadyDay = w.day + RELIEF_INTERVAL;
+    var region = w.regions[index];
+    region.aid = Math.min(AID_CAP, region.aid + RELIEF_GRANT);
+    MW.pushNews(w, '援助', MW.T('relief.arrived', '应急补给已送达{r}，医疗承载暂时提升', { r: MW.regionName(index) }), 1);
+    return true;
+  };
 
   MW.responseTick = function (w, mods) {
     var p = w.params, R = w.regions, REG = MW.REGIONS;
@@ -61,7 +81,7 @@
       var cand = [];
       for (i = 0; i < R.length; i++) {
         r = R[i]; rd = REG[i];
-        var score = r.sev * ((6 - rd.med) / 5) * Math.max(0.05, 1 - r.aid / 1.2) * (r._L > 1e5 ? 1 : 0);
+        var score = r.sev * ((6 - rd.med) / 5) * Math.max(0.05, 1 - r.aid / AID_CAP) * (r._L > 1e5 ? 1 : 0);
         if (w.aidPriority === i) score *= 2.5;
         if (score > 0.0005) cand.push([score, i]);
       }
@@ -69,7 +89,7 @@
       var nGive = Math.min(cand.length, 6);
       for (i = 0; i < nGive; i++) {
         var idx = cand[i][1];
-        var room = 1.2 - R[idx].aid;
+        var room = AID_CAP - R[idx].aid;
         if (room <= 0) continue;
         var grant = Math.min(0.22, w.aidPool * 0.4 / nGive, room);
         R[idx].aid += grant;

@@ -192,23 +192,44 @@ T('坏文件导入被拒绝且不崩溃', function () {
   eq(caught, cases.length, '所有坏文件都应抛错');
 });
 T('双槽轮换：坏槽自动回退好槽', function () {
-  // 用内存后端
   ok(MW.PersistTestMem(), 'Node下应为内存后端');
-  var a = makeW({ seedStr: 'slot', anomaly: 'et' });
+  var entries = {};
+  var storage = {
+    getItem: function (key) { return entries[key] === undefined ? null : entries[key]; },
+    setItem: function (key, value) { entries[key] = value; }
+  };
+  var a = makeW({ seedStr: 'older', anomaly: 'et' });
   runTicks(a, 200);
-  var k1 = MW.saveWorld(a); ok(k1, '保存1');
-  runTicks(a, 100); a.seq++;
-  var k2 = MW.saveWorld(a); ok(k2 && k2 !== k1, '轮换槽');
-  // 破坏新槽
-  var storeKey = k2;
-  globalThis.localStorage = undefined; // 确保仍用内存
-  var r = MW.loadWorld();
-  ok(r && r.world, '至少一个槽可读');
-  eq(r.world.day, a.day, '读到最新');
-  // 模拟两个槽全坏
-  var memStore = (function () { var m = {}; return { getItem: function (k) { return m[k] || null; }, setItem: function (k, v) { m[k] = v; }, removeItem: function (k) { delete m[k]; } }; })();
-  // 直接往全局塞坏数据（persist 走 localStorage 分支仅当存在；此处用异常路径验证 corrupt 报告）
-  ok(true, '双槽回退逻辑已验证');
+  var k1 = MW.saveWorld(a, storage);
+  var k2 = MW.saveWorld(a, storage);
+  ok(k1 && k2 && k1 !== k2, '轮换槽');
+  var b = makeW({ seedStr: 'newer' });
+  eq(MW.saveWorld(b, storage), k1, '新游戏保留旧游戏最新槽');
+  eq(MW.loadWorld(storage).world.seedStr, 'newer', '继续应恢复最后保存的新游戏');
+  entries[k1] = '{truncated';
+  var recovered = MW.loadWorld(storage);
+  ok(recovered.recovered, '报告备份恢复');
+  eq(recovered.world.seedStr, 'older');
+  entries[k2] = '{bad';
+  ok(MW.loadWorld(storage).corrupt, '两个损坏的槽与空存档区分');
+});
+T('保存配额不足时保留现有存档，且不裁剪运行中的历史', function () {
+  var w = makeW({});
+  runTicks(w, 900);
+  var saved = {};
+  var storage = {
+    getItem: function (key) { return saved[key] || null; },
+    setItem: function (key, value) { saved[key] = value; }
+  };
+  var key = MW.saveWorld(w, storage);
+  var checkpoint = saved[key];
+  runTicks(w, 15);
+  var hash = stateHash(w), seq = w.seq;
+  storage.setItem = function () { throw new Error('quota'); };
+  eq(MW.saveWorld(w, storage), null);
+  eq(saved[key], checkpoint);
+  eq(stateHash(w), hash);
+  eq(w.seq, seq);
 });
 T('设置持久化往返', function () {
   MW.saveSettings({ mini: true, quality: 1, offCapH: 12, winW: 480, winH: 320 });
@@ -334,6 +355,23 @@ T('非法场景包被拒绝且不污染场景表；持久化可恢复', function
 });
 
 console.log('== 手动干预（援助优先级） ==');
+T('应急补给消耗共享库存，带冷却且随存档恢复', function () {
+  var w = makeW({});
+  eq(MW.sendRelief(w, 0), false, '库存不足');
+  w.aidPool = 10;
+  eq(MW.sendRelief(w, -1), false, '区域非法');
+  ok(MW.sendRelief(w, 0));
+  near(w.regions[0].aid, 0.35, 1e-9);
+  eq(w.aidPool, 7);
+  eq(MW.sendRelief(w, 1), false, '共享补给仍在冷却');
+  var restored = MW.importSave(MW.exportSave(w));
+  eq(restored.reliefReadyDay, 14);
+  eq(MW.sendRelief(restored, 1), false);
+  restored.day = restored.reliefReadyDay;
+  restored.regions[1].aid = 1.14;
+  ok(MW.sendRelief(restored, 1));
+  near(restored.regions[1].aid, 1.2, 1e-9, '不超过容量上限');
+});
 T('setAidPriority 校验：非法区域拒绝、-1 取消、幂等、序列化往返', function () {
   var w = makeW({ seedStr: 'prio-val', anomaly: 'fog' });
   ok(MW.setAidPriority(w, 3.5) === false, '小数应拒绝');

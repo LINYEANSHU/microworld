@@ -7,7 +7,7 @@
 
   var KEY_A = 'mw_save_A', KEY_B = 'mw_save_B', KEY_SET = 'mw_settings';
   var mem = {}; // Node 测试用内存后端
-  var useMem = (typeof localStorage === 'undefined');
+  var useMem = typeof window === 'undefined' && typeof localStorage === 'undefined';
 
   function store() {
     if (useMem) return {
@@ -19,88 +19,78 @@
   }
   MW.PersistTestMem = function () { return useMem; };
 
-  function envelope(w) {
-    var payload = JSON.stringify(MW.serialize(w));
-    return { fmt: 'microworld', v: MW.SAVE_VERSION, seq: w.seq, t: Date.now(), ck: U.fnv1a(payload), payload: payload };
+  function envelope(snapshot, seq) {
+    var payload = JSON.stringify(snapshot);
+    return { fmt: 'microworld', v: MW.SAVE_VERSION, seq: seq, t: Date.now(), ck: U.fnv1a(payload), payload: payload };
   }
 
-  // 只序列化信封字段：env._w 仅是配额裁剪重试用的内存引用，
-  // 若被 JSON.stringify 一并写入，整个 world 会随 payload 双份落盘（体积×2、速度×0.5）。
-  // 读取端（loadWorld/importSave）只认 fmt/v/seq/t/ck/payload，因此剥离 _w 完全兼容新旧存档。
-  function cleanEnv(env) {
-    return { fmt: env.fmt, v: env.v, seq: env.seq, t: env.t, ck: env.ck, payload: env.payload };
+  function trimSnapshot(snapshot) {
+    var hist = {};
+    Object.keys(snapshot.hist).forEach(function (key) { hist[key] = snapshot.hist[key].slice(-400); });
+    return Object.assign({}, snapshot, { hist: hist, news: snapshot.news.slice(-120), evoLog: snapshot.evoLog.slice(-80) });
   }
 
-  function writeSlot(key, env) {
-    var s = store();
-    try {
-      s.setItem(key, JSON.stringify(cleanEnv(env)));
-      return true;
-    } catch (e) {
-      // 配额不足：裁剪历史后重试一次
-      try {
-        env.payload = JSON.stringify(MW.serialize((function trim(w2) {
-          w2.hist.t = w2.hist.t.slice(-400); w2.hist.inf = w2.hist.inf.slice(-400);
-          w2.hist.dead = w2.hist.dead.slice(-400); w2.hist.cure = w2.hist.cure.slice(-400);
-          w2.hist.aw = w2.hist.aw.slice(-400); w2.hist.pop = w2.hist.pop.slice(-400);
-          w2.news = w2.news.slice(-120); w2.evoLog = w2.evoLog.slice(-80);
-          return w2;
-        })(env._w)));
-        env.ck = U.fnv1a(env.payload);
-        s.setItem(key, JSON.stringify(cleanEnv(env)));
-        return true;
-      } catch (e2) { return false; }
-    }
+  function isEnvelope(env) {
+    return env && env.fmt === 'microworld' && env.v === MW.SAVE_VERSION
+      && typeof env.payload === 'string' && Number.isSafeInteger(env.seq) && env.seq >= 0
+      && env.seq < Number.MAX_SAFE_INTEGER && Number.isFinite(env.t);
   }
 
-  // 保存（轮换双槽）。seq 单调递增——loadWorld 依此判定"最新"，平局再比时间戳。
-  MW.saveWorld = function (w) {
-    w.seq = (w.seq | 0) + 1;
-    var env = envelope(w);
-    env._w = w;
-    var lastKey = w._lastSlot === KEY_A ? KEY_B : KEY_A;
-    var okNew = writeSlot(lastKey, env);
-    if (okNew) {
-      w._lastSlot = lastKey;
-      w._saveOk = true;
-      return lastKey;
-    }
-    // 新槽失败：覆写当前槽
-    var curKey = w._lastSlot === KEY_B ? KEY_B : KEY_A;
-    var okCur = writeSlot(curKey, env);
-    w._saveOk = okCur;
-    return okCur ? curKey : null;
-  };
-
-  // 读取：按 seq 从新到旧尝试两个槽；校验失败自动回退。
-  // 返回 {world, env} 或 {corrupt:true} 或 null
-  MW.loadWorld = function () {
-    var s = store();
-    var cands = [];
-    for (var i = 0; i < 2; i++) {
-      var key = i === 0 ? KEY_A : KEY_B;
-      var raw = null;
-      try { raw = s.getItem(key); } catch (e) { raw = null; }
-      if (!raw) continue;
+  function readSlots(storage) {
+    var candidates = [], occupied = 0;
+    [KEY_A, KEY_B].forEach(function (key) {
+      var raw = storage.getItem(key);
+      if (raw === null) return;
+      occupied++;
       try {
         var env = JSON.parse(raw);
-        if (!env || env.fmt !== 'microworld') continue;
-        var ok = U.fnv1a(env.payload) === env.ck;
-        cands.push({ key: key, env: env, ok: ok, seq: env.seq | 0 });
-      } catch (e) { /* 坏槽：跳过 */ }
-    }
-    if (!cands.length) return null;
-    cands.sort(function (a, b) { return (b.seq - a.seq) || (b.env.t - a.env.t); });
-    for (i = 0; i < cands.length; i++) {
-      var c = cands[i];
-      if (!c.ok) continue;
+        if (isEnvelope(env)) candidates.push({ key: key, env: env });
+      } catch (e) { /* Check the other slot. */ }
+    });
+    candidates.sort(function (a, b) { return (b.env.seq - a.env.seq) || (b.env.t - a.env.t); });
+    var skipped = candidates.length !== occupied;
+    for (var i = 0; i < candidates.length; i++) {
+      var c = candidates[i];
       try {
-        var obj = JSON.parse(c.env.payload);
-        var w = MW.deserialize(obj);
-        if (w) { w._lastSlot = c.key; w.seq = c.seq; return { world: w, env: c.env }; }
-      } catch (e) { /* 继续下一槽 */ }
+        if (U.fnv1a(c.env.payload) === c.env.ck) {
+          var world = MW.deserialize(JSON.parse(c.env.payload));
+          if (world) {
+            world._lastSlot = c.key;
+            world.seq = c.env.seq;
+            return { world: world, env: c.env, recovered: skipped };
+          }
+        }
+      } catch (e) { /* Check the other slot. */ }
+      skipped = true;
     }
-    return { corrupt: true };
+    return occupied ? { corrupt: true } : null;
+  }
+
+  MW.saveWorld = function (w, storage) {
+    try {
+      var s = storage || store();
+      var last = readSlots(s);
+      var key = last && last.world && last.world._lastSlot === KEY_A ? KEY_B : KEY_A;
+      var seq = (last && last.env ? last.env.seq : 0) + 1;
+      var snapshot = MW.serialize(w);
+      try {
+        s.setItem(key, JSON.stringify(envelope(snapshot, seq)));
+      } catch (e) {
+        s.setItem(key, JSON.stringify(envelope(trimSnapshot(snapshot), seq)));
+      }
+      w.seq = seq;
+      w._lastSlot = key;
+      w._saveOk = true;
+      return key;
+    } catch (e) {
+      w._saveOk = false;
+      return null;
+    }
+  };
+
+  MW.loadWorld = function (storage) {
+    try { return readSlots(storage || store()); }
+    catch (e) { return { unavailable: true }; }
   };
 
   MW.clearSaves = function () {
@@ -115,18 +105,18 @@
 
   // 导入/导出（文件备份）
   MW.exportSave = function (w) {
-    var env = envelope(w); env._w = w;
-    return JSON.stringify({ export: 'microworld-save', env: { fmt: env.fmt, v: env.v, seq: env.seq, t: env.t, ck: env.ck, payload: env.payload } }, null, 1);
+    return JSON.stringify({ export: 'microworld-save', env: envelope(MW.serialize(w), w.seq) }, null, 1);
   };
   MW.importSave = function (str) {
     var outer = JSON.parse(str); // 坏文件在此抛出，由调用方提示
     var env = outer && outer.export === 'microworld-save' ? outer.env : outer;
     if (!env || env.fmt !== 'microworld') throw new Error('不是本游戏的存档文件');
+    if (!isEnvelope(env)) throw new Error('存档格式或版本不兼容');
     if (U.fnv1a(env.payload) !== env.ck) throw new Error('校验和不符：文件已损坏');
     var w = MW.deserialize(JSON.parse(env.payload));
     if (!w) throw new Error('存档版本不兼容（期望 v' + MW.SAVE_VERSION + '）');
     w._lastSlot = null;
-    w.seq = env.seq | 0;
+    w.seq = env.seq;
     return w;
   };
 
@@ -137,8 +127,8 @@
     lang: 'zh', autoEvo: true
   };
   MW.loadSettings = function () {
-    var s = store(), o = null;
-    try { o = JSON.parse(s.getItem(KEY_SET) || 'null'); } catch (e) { o = null; }
+    var o = null;
+    try { o = JSON.parse(store().getItem(KEY_SET) || 'null'); } catch (e) { o = null; }
     var out = {};
     for (var k in DEF_SETTINGS) out[k] = (o && o[k] !== undefined) ? o[k] : DEF_SETTINGS[k];
     return out;

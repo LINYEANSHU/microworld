@@ -23,6 +23,7 @@
   var _tickAcc = 0, _tickN = 0;
   var _fpsC = 0, _fpsT = 0;
   var _hudT = 0, _autoevoSetting = true;
+  var initialSave = null;
 
   // ---------- 启动 ----------
   function boot() {
@@ -40,6 +41,7 @@
       onAutoEvo: function (v) { _autoevoSetting = v; settings.autoEvo = v; MW.saveSettings(settings); },
       manualBuy: manualBuy,
       setAidPriority: setAidPriority,
+      sendRelief: sendRelief,
       togglePause: togglePause,
       setSpeed: setSpeed,
       setQuality: setQuality,
@@ -68,18 +70,15 @@
       $('in-seed').value = 'MW-' + Math.floor(Math.random() * 1e9).toString(36);
     };
     // 继续上次
-    try {
-      var r = MW.loadWorld();
-      if (r && r.world) {
-        $('btn-continue').classList.remove('hidden');
-        $('btn-continue').onclick = function () { resumeFrom(r.world); };
-        $('start-news').classList.remove('hidden');
-        $('start-news').textContent = MW.T('start.lastObs', '上次观察：{d} · {s}', { d: U.fmtDay(r.world.day), s: MW.scenById(r.world.scenarioId).name });
-      }
-    } catch (e) { /* 存档损坏也不阻塞开始屏 */ }
+    initialSave = MW.loadWorld();
+    if (initialSave && initialSave.world) {
+      $('btn-continue').classList.remove('hidden');
+      $('btn-continue').onclick = function () { resumeFrom(initialSave.world); };
+    }
+    updateStartSave();
     // 菜单
     $('mi-save').onclick = function () {
-      if (world) { var k = MW.saveWorld(world); MW.UI.toast(k ? MW.T('toast.saved', '已保存') : MW.T('toast.saveFail', '保存失败（存储空间不足？）'), !k); }
+      if (world && checkpoint(true)) MW.UI.toast(MW.T('toast.saved', '已保存'));
     };
     $('mi-export').onclick = exportSave;
     $('mi-import').onclick = function () { $('file-import').click(); };
@@ -94,12 +93,14 @@
       if (typeof MW.applyLang === 'function') MW.applyLang();
       MW.UI.fillSetup();
       MW.UI.updateHUD();
+      if (world) MW.UI.renderTab();
+      updateStartSave();
       if (world) { MW.UI.pushNewsItem(world.news[world.news.length - 1] || { day: world.day, cat: '', text: '', sev: 1 }); }
     }
     $('btn-lang').onclick = toggleLang;
     $('sel-lang').onchange = function () { setLang(this.value); };
     $('mi-quit').onclick = function () {
-      if (world) MW.saveWorld(world);
+      if (world && !checkpoint(true)) return;
       running = false;
       MW.UI.show('screen-start');
       location.reload ? null : null;
@@ -116,7 +117,7 @@
     restoreWindowSize();
     // 可见性
     document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('beforeunload', function () { if (world && running) MW.saveWorld(world); });
+    window.addEventListener('pagehide', function () { if (world && running && !hiddenAt) checkpoint(false); });
     // 请求主循环
     requestAnimationFrame(function loop(t) { requestAnimationFrame(loop); driveLoop(t); });
     // RAF饥饿看门狗：窗口被遮挡/合成器节流时RAF可能停发。
@@ -125,6 +126,29 @@
       if (!running || document.hidden) return;
       if (performance.now() - lastFrameCall > 600) driveLoop(performance.now());
     }, 150);
+  }
+
+  function updateStartSave() {
+    if (!initialSave) return;
+    var text = $('start-news');
+    text.classList.remove('hidden');
+    if (initialSave.world) {
+      var saved = initialSave.world;
+      text.textContent = MW.T(initialSave.recovered ? 'start.backup' : 'start.lastObs',
+        initialSave.recovered ? '可继续备份存档：{d} · {s}' : '上次观察：{d} · {s}',
+        { d: U.fmtDay(saved.day), s: MW.scenName(saved.scenarioId) });
+    } else {
+      text.textContent = initialSave.unavailable
+        ? MW.T('start.unavailable', '浏览器存储暂不可用')
+        : MW.T('start.corrupt', '浏览器存档无法读取，可在游戏菜单中导入备份文件。');
+    }
+  }
+
+  function checkpoint(notify) {
+    world.wallAnchor = hiddenAt || Date.now();
+    var saved = MW.saveWorld(world);
+    if (!saved && notify) MW.UI.toast(MW.T('toast.saveFail', '保存失败（存储空间不足？）'), true);
+    return !!saved;
   }
 
   var lastFrameCall = 0;
@@ -151,6 +175,7 @@
     world._eventFreqSetting = o.eventFreq;
     world.speedIdx = o.speedIdx || 1;
     enterGame();
+    checkpoint(true);
     MW.UI.toast(MW.T('toast.obsStart', '观察开始：{r}出现首个感染灶', { r: MW.regionName(world.stats.startRegion) }));
   }
 
@@ -166,8 +191,9 @@
   function enterGame() {
     running = true;
     paused = world.speedIdx === 0;
-    resumeSpeed = world.speedIdx || settings.speedDefault || 1;
+    resumeSpeed = world.speedIdx || world.resumeSpeed || settings.speedDefault || 1;
     debt = 0; lastFrame = 0; catchupQueue = -1;
+    autosaveT = 0;
     MW.UI.show('screen-game');
     MW.UI.style = (settings.style === undefined ? 1 : settings.style);
     MW.UI.bindWorld(world);
@@ -176,8 +202,6 @@
     _autoevoSetting = settings.autoEvo;
     MW.UI.openDrawer ? null : null;
     MW.UI.closeDrawer();
-    world.wallAnchor = Date.now();
-    MW.saveWorld(world);
   }
 
   // ---------- 主循环（由 driveLoop 统一驱动：RAF 为主、看门狗兜底） ----------
@@ -229,7 +253,7 @@
       if (_hudT > 250) { _hudT = 0; MW.UI.updateHUD(); }
       // —— 自动存档（45s） ——
       autosaveT += dtMs;
-      if (autosaveT > 45000) { autosaveT = 0; MW.saveWorld(world); }
+      if (autosaveT > 45000) { autosaveT = 0; checkpoint(false); }
     }
     // perf
     var fr = performance.now() - t0;
@@ -264,7 +288,7 @@
   function checkEnding() {
     if (world.flags.ended && !MW.UI.endNoted) {
       MW.UI.endNoted = true;
-      MW.saveWorld(world);
+      checkpoint(true);
       MW.UI.showEnding(world);
     }
   }
@@ -274,8 +298,7 @@
     if (!world || !running) return;
     if (document.hidden) {
       hiddenAt = Date.now();
-      world.wallAnchor = hiddenAt;
-      MW.saveWorld(world);
+      checkpoint(false);
     } else if (hiddenAt) {
       var ha = hiddenAt;
       hiddenAt = 0;
@@ -286,9 +309,7 @@
   // 锚点先行：先写新锚点并存档，再分批补算 —— 中断只会少推，不会重推
   function scheduleCatchup(deltaMs) {
     var plan = MW.catchupCompute(world, Date.now(), Date.now() - Math.max(0, deltaMs), settings.offCapH || 8);
-    if (plan.ticks <= 0 && plan.approxSteps <= 0) return;
-    world.wallAnchor = Date.now();
-    MW.saveWorld(world);
+    if (!checkpoint(true) || (plan.ticks <= 0 && plan.approxSteps <= 0)) return;
     world.flags.catchupTicks = (world.flags.catchupTicks || 0) + plan.ticks + plan.approxSteps * 7;
     perf.catchups++;
     var total = plan.ticks;
@@ -319,13 +340,14 @@
         else {
           catchupQueue = -1;
           MW.pushNews(world, '系统', MW.T('news.fastforward', '离线期间部分时间以快速推进方式度过（近似处理）'), 1);
-          MW.saveWorld(world);
+          checkpoint(false);
           MW.UI.toast(MW.T('toast.fastDone', '快速推进完成：{n} 天被跳过', { n: world.flags.approxDays || 0 }));
         }
       };
       chunk();
     } else {
       catchupQueue = -1;
+      checkpoint(false);
       if (world._catchupNote) MW.UI.toast(world._catchupNote.trim());
     }
     world._catchupNote = '';
@@ -356,7 +378,14 @@
   function setAidPriority(idx) {
     if (!world) return;
     var okp = MW.setAidPriority(world, idx);
+    if (okp) checkpoint(true);
     MW.UI.toast(okp ? MW.T('aidprio.toast', '已更新援助优先级') : MW.T('aidprio.bad', '无效的区域'), !okp);
+  }
+
+  function sendRelief(idx) {
+    if (!MW.sendRelief(world, idx)) return;
+    checkpoint(true);
+    MW.UI.toast(MW.T('relief.arrived', '应急补给已送达{r}，医疗承载暂时提升', { r: MW.regionName(idx) }));
   }
 
   // ---------- 速度 / 暂停 / 迷你 / 画质 ----------
@@ -367,12 +396,12 @@
   function setSpeed(s) {
     if (!world) return;
     if (MW.SPEEDS.indexOf(s) < 0) return;
-    if (s === 0 && world.speedIdx > 0) resumeSpeed = world.speedIdx;
+    if (s > 0) resumeSpeed = s;
+    world.resumeSpeed = resumeSpeed;
     paused = (s === 0);
     world.speedIdx = s;
     // Persist pause itself so hidden/reloaded worlds cannot accrue offline ticks.
-    world.wallAnchor = Date.now();
-    MW.saveWorld(world);
+    checkpoint(true);
     MW.UI.updateHUD();
   }
   function toggleMini() {
@@ -436,6 +465,7 @@
         w._eventFreqSetting = settings.eventFreq || 1;
         world = w;
         enterGame();
+        checkpoint(true);
         MW.UI.toast(MW.T('toast.imported', '导入成功：继续第 {d} 天的观察', { d: w.day }));
       } catch (e) {
         MW.UI.toast(MW.T('toast.importFail', '导入失败：') + e.message, true); // 坏文件不影响现有存档

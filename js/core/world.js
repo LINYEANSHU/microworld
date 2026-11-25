@@ -77,7 +77,7 @@
       ap: 0, evoCd: 0,
       regions: regions, links: links,
       research: { progress: 0, deployed: false, deployedDay: -1 },
-      aidPool: 0, aidPriority: -1,
+      aidPool: 0, aidPriority: -1, reliefReadyDay: 0,
       mods: [], eventCd: {},
       rngS: rng.getState(), rngEv: rngEv.getState(), rngEvo: rngEvo.getState(),
       hist: { t: [], inf: [], dead: [], cure: [], aw: [], pop: [] },
@@ -133,13 +133,14 @@
   MW.serialize = function (w) {
     return {
       v: w.v, seed: w.seed, seedStr: w.seedStr, scenarioId: w.scenarioId, anomalyId: w.anomalyId,
-      day: w.day, speedIdx: w.speedIdx,
+      day: w.day, speedIdx: w.speedIdx, resumeSpeed: w.resumeSpeed || 0,
       params: w.params, owned: w.owned, refineLvl: w.refineLvl, ap: w.ap, evoCd: w.evoCd,
       regions: w.regions.map(function (r) {
         return [r.S, r.E, r.I, r.R, r.D, r.C, r.aw, r.aid, r.camp, r.outMul, r.cA ? 1 : 0, r.cS ? 1 : 0, r.cL ? 1 : 0, r.lastAidNews || 0];
       }),
       links: w.links.map(function (l) { return l.cls; }),
       research: w.research, aidPool: w.aidPool, aidPriority: w.aidPriority | 0,
+      reliefReadyDay: w.reliefReadyDay || 0,
       mods: w.mods, eventCd: w.eventCd,
       rng: [w.rngS, w.rngEv, w.rngEvo],
       hist: w.hist, news: w.news, evoLog: w.evoLog,
@@ -152,11 +153,14 @@
 
   MW.deserialize = function (o) {
     if (!o || typeof o !== 'object') return null;
-    if (o.v !== SAVE_VERSION) return null; // 未来版本迁移位
+    if (o.v !== SAVE_VERSION || !o.params || !o.research || !o.stats
+      || !Array.isArray(o.rng) || o.rng.length !== 3 || !o.hist
+      || !['t', 'inf', 'dead', 'cure', 'aw', 'pop'].every(function (key) { return Array.isArray(o.hist[key]); })) return null;
     var w = {};
     w.v = o.v; w.seed = o.seed >>> 0; w.seedStr = o.seedStr || '?';
     w.scenarioId = o.scenarioId; w.anomalyId = o.anomalyId;
     w.day = o.day | 0; w.speedIdx = o.speedIdx | 0;
+    w.resumeSpeed = MW.SPEEDS.indexOf(o.resumeSpeed) > 0 ? o.resumeSpeed : 0;
     w.params = o.params; w.owned = o.owned || []; w.refineLvl = o.refineLvl | 0;
     w.ap = +o.ap || 0; w.evoCd = o.evoCd | 0;
     var R = MW.REGIONS;
@@ -179,6 +183,7 @@
     // 手动援助优先级（v3 新增可选字段；旧存档缺省 → -1，无优先）
     w.aidPriority = (typeof o.aidPriority === 'number' && isFinite(o.aidPriority) &&
       o.aidPriority >= -1 && o.aidPriority < R.length) ? (o.aidPriority | 0) : -1;
+    w.reliefReadyDay = Number.isSafeInteger(o.reliefReadyDay) && o.reliefReadyDay >= 0 ? o.reliefReadyDay : 0;
     w.mods = Array.isArray(o.mods) ? o.mods : [];
     w.eventCd = o.eventCd || {};
     w.rngS = o.rng[0] >>> 0; w.rngEv = o.rng[1] >>> 0; w.rngEvo = o.rng[2] >>> 0;

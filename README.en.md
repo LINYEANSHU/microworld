@@ -6,7 +6,7 @@
 
 **Press “One-Click Observe” and let the world evolve.**
 Anomaly spread, automatic evolution, human research and aid unfold across 80 fictional regions.
-Watch the news and map, pause or accelerate time, or prioritize aid for a region.
+Watch the news and map, pause or accelerate time, prioritize regional aid, or send emergency supplies from a shared stockpile.
 
 ## Download for Windows
 
@@ -78,12 +78,14 @@ On Windows x64 with Node.js 24, run `node desktop/build.cjs` to produce the desk
 | 1× / 2× / 4× / 8× | `1` / `2` / `3` / `4` or speed buttons |
 | News, evolution and statistics | “Details” and the corresponding menu panels |
 | Prioritize aid | Region details → “Prioritize aid” |
+| Send emergency supplies | Region details → “Send emergency supplies”. Costs 3 supplies and has a 14-day cooldown. |
 | Chinese/English / mini window | Start screen or Settings / “Mini” |
 | Close menu or Settings | `Escape` |
 
 ## Saves and offline progress
 
 The running game autosaves every 45 seconds; the menu also offers immediate saving and JSON export/import.
+Continue opens the most recent successful checkpoint. It offers the backup if the newest save is damaged, and a full storage quota will leave the existing checkpoint intact.
 Saves include simulation time, RNG state, events and history, using two rotating `localStorage` slots with checksums.
 The Windows app stores data in `%APPDATA%\Entertainment Desktop\microworld` by default. Export a file for backups or migration.
 
@@ -100,7 +102,7 @@ node test/run-tests.js
 node test/smoke.js
 ```
 
-- **32 / 32 regression tests passed**, covering population conservation, determinism, saves, catch-up, scenario packs and aid priority.
+- Run `node test/run-tests.js` to check population conservation, determinism, save recovery, catch-up, scenario packs, and emergency supplies.
 - The smoke script passed, exercising built-in scenario/anomaly combinations. Optional `node test/stress.js` covers long soaks, matrix runs, save rotation and catch-up storms; it was not completed in this pass.
 - The same-day Edge review with GPU/WebGL disabled passed **13 browser assertions**, covering desktop/narrow layouts, pause restoration, continued simulation after catch-up, form keys and real scenario-pack uploads.
 - Physical phones, screen readers and touch hardware were not tested; pinch zoom is not implemented. Launcher window pinning received static/syntax checks only.

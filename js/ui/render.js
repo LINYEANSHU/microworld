@@ -187,6 +187,7 @@
   // —— 绑定世界：建立区域视觉缓存 ——
   R.bindWorld = function (w) {
     R.world = w;
+    R.lastSimDay = -1;
     R.rc = [];
     var ac = hexRgb(anomColor(w));
     for (var i = 0; i < w.regions.length; i++) {
@@ -214,6 +215,8 @@
 
   // —— 每个 simTick 调一次：更新目标值与视觉事件 ——
   R.onSimTick = function (w) {
+    if (R.lastSimDay === w.day) return;
+    R.lastSimDay = w.day;
     for (var i = 0; i < w.regions.length; i++) {
       var r = w.regions[i], rc = R.rc[i], rd = MW.REGIONS[i];
       if (!r || !rc) continue;
